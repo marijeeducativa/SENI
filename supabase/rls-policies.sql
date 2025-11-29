@@ -1,5 +1,5 @@
 -- ============================================
--- POLÍTICAS RLS PARA SENI
+-- POLÍTICAS RLS PARA SENI - VERSION SIMPLIFICADA
 -- Ejecuta este script en Supabase SQL Editor
 -- ============================================
 
@@ -216,36 +216,6 @@ WITH CHECK (
 -- EVALUACIONES: Permitir actualizar a usuarios autenticados
 CREATE POLICY "Usuarios autenticados pueden actualizar evaluaciones"
 ON evaluaciones FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM usuarios
-    WHERE usuarios.auth_user_id = auth.uid()
-    AND usuarios.is_active = true
-  )
-);
-
--- OBSERVACIONES: Permitir lectura a usuarios autenticados
-CREATE POLICY "Usuarios autenticados pueden ver observaciones"
-ON observaciones FOR SELECT
-TO authenticated
-USING (true);
-
--- OBSERVACIONES: Permitir insertar a usuarios autenticados
-CREATE POLICY "Usuarios autenticados pueden crear observaciones"
-ON observaciones FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM usuarios
-    WHERE usuarios.auth_user_id = auth.uid()
-    AND usuarios.is_active = true
-  )
-);
-
--- OBSERVACIONES: Permitir actualizar a usuarios autenticados
-CREATE POLICY "Usuarios autenticados pueden actualizar observaciones"
-ON observaciones FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
