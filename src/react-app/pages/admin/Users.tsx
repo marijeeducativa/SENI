@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, UserCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Usuario } from "@/shared/types";
 import UserModal from "@/react-app/components/UserModal";
+import { getUsuarios } from "@/react-app/lib/supabase-helpers";
 
 export default function AdminUsers() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -12,15 +13,7 @@ export default function AdminUsers() {
 
   const fetchUsuarios = async () => {
     try {
-      const response = await fetch("/api/usuarios", {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        console.error("Error fetching users:", response.statusText);
-        setUsuarios([]);
-        return;
-      }
-      const data = await response.json();
+      const data = await getUsuarios();
       setUsuarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -40,7 +33,7 @@ export default function AdminUsers() {
     }
 
     try {
-      await fetch(`/api/usuarios/${id}`, { 
+      await fetch(`/api/usuarios/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -144,20 +137,18 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            usuario.rol === "administrador"
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${usuario.rol === "administrador"
                               ? "bg-purple-100 text-purple-800"
                               : "bg-blue-100 text-blue-800"
-                          }`}
+                            }`}
                         >
                           {usuario.rol === "administrador" ? "Administrador" : "Maestro"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            usuario.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                          }`}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${usuario.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                            }`}
                         >
                           {usuario.is_active ? "Activo" : "Inactivo"}
                         </span>
