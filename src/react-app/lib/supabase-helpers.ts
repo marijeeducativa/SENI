@@ -177,30 +177,48 @@ export async function deleteCurso(id: number) {
 // ==================== ESTUDIANTES ====================
 
 export async function getEstudiantes() {
-    const { data: estudiantes, error } = await supabase
-        .from('estudiantes')
-        .select('*')
-        .eq('is_active', true)
-        .order('nombre')
-        .order('apellido')
+    console.log('[getEstudiantes] Starting...')
 
-    if (error) throw error
+    try {
+        const { data: estudiantes, error } = await supabase
+            .from('estudiantes')
+            .select('*')
+            .eq('is_active', true)
+            .order('nombre')
+            .order('apellido')
 
-    // Fetch courses
-    const { data: cursos } = await supabase
-        .from('cursos')
-        .select('id, nombre_curso, seccion')
-
-    const cursosMap = new Map(cursos?.map((c: any) => [c.id, c]) || [])
-
-    return estudiantes.map((e: any) => {
-        const curso: any = e.id_curso_actual ? cursosMap.get(e.id_curso_actual) : null
-        return {
-            ...e,
-            curso_nombre: curso?.nombre_curso,
-            curso_seccion: curso?.seccion
+        if (error) {
+            console.error('[getEstudiantes] Error fetching estudiantes:', error)
+            throw error
         }
-    })
+
+        console.log('[getEstudiantes] Estudiantes received:', estudiantes?.length)
+
+        // Fetch courses
+        const { data: cursos, error: cursosError } = await supabase
+            .from('cursos')
+            .select('id, nombre_curso, seccion')
+
+        if (cursosError) {
+            console.error('[getEstudiantes] Error fetching cursos:', cursosError)
+        }
+
+        console.log('[getEstudiantes] Cursos received:', cursos?.length)
+
+        const cursosMap = new Map(cursos?.map((c: any) => [c.id, c]) || [])
+
+        return estudiantes.map((e: any) => {
+            const curso: any = e.id_curso_actual ? cursosMap.get(e.id_curso_actual) : null
+            return {
+                ...e,
+                curso_nombre: curso?.nombre_curso,
+                curso_seccion: curso?.seccion
+            }
+        })
+    } catch (error) {
+        console.error('[getEstudiantes] Catch error:', error)
+        throw error
+    }
 }
 
 export async function createEstudiante(estudiante: any) {
