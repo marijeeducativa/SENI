@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "../supabase";
-import { getApiUrl } from "../config";
 
 interface User {
   id: number;

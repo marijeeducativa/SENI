@@ -143,7 +143,7 @@ export default function AdminStudents() {
           await enrollEstudiante(editingEstudiante.id, Number(formData.id_curso_actual));
         }
       } else {
-        const newStudent = await createEstudiante(studentData);
+        await createEstudiante(studentData);
         // createEstudiante already handles enrollment if id_curso_actual is present
       }
 
