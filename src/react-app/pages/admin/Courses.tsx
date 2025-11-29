@@ -1,8 +1,7 @@
 import AdminLayout from "@/react-app/components/AdminLayout";
 import { useEffect, useState } from "react";
 import { BookOpen, Plus, Edit2, Trash2, X } from "lucide-react";
-import { getCursos, getUsuarios } from "@/react-app/lib/supabase-helpers";
-import { supabase } from "@/react-app/supabase";
+import { getCursos, getUsuarios, createCurso, updateCurso, deleteCurso } from "@/react-app/lib/supabase-helpers";
 
 interface Curso {
   id: number;
@@ -76,29 +75,23 @@ export default function AdminCourses() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const url = editingCurso ? `/api/cursos/${editingCurso.id}` : "/api/cursos";
-    const method = editingCurso ? "PUT" : "POST";
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          id_maestro: formData.id_maestro ? Number(formData.id_maestro) : null,
-        }),
-      });
+      const cursoData = {
+        ...formData,
+        id_maestro: formData.id_maestro ? Number(formData.id_maestro) : null,
+      };
 
-      if (response.ok) {
-        fetchCursos();
-        closeModal();
+      if (editingCurso) {
+        await updateCurso(editingCurso.id, cursoData);
       } else {
-        const error = await response.json();
-        alert(error.error || "Error al guardar el curso");
+        await createCurso(cursoData);
       }
-    } catch (error) {
+
+      fetchCursos();
+      closeModal();
+    } catch (error: any) {
       console.error("Error saving curso:", error);
-      alert("Error al guardar el curso");
+      alert(error.message || "Error al guardar el curso");
     }
   };
 
@@ -106,12 +99,11 @@ export default function AdminCourses() {
     if (!confirm("¿Estás seguro de que deseas eliminar este curso?")) return;
 
     try {
-      const response = await fetch(`/api/cursos/${id}`, { method: "DELETE" });
-      if (response.ok) {
-        fetchCursos();
-      }
-    } catch (error) {
+      await deleteCurso(id);
+      fetchCursos();
+    } catch (error: any) {
       console.error("Error deleting curso:", error);
+      alert(error.message || "Error al eliminar el curso");
     }
   };
 
