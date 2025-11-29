@@ -1,6 +1,7 @@
 import AdminLayout from "@/react-app/components/AdminLayout";
 import { useEffect, useState, useRef } from "react";
 import { GraduationCap, Plus, Edit2, Trash2, X, Upload, ArrowRight, CheckSquare, Square } from "lucide-react";
+import { getEstudiantes, getCursos, createEstudiante, updateEstudiante, deleteEstudiante } from "@/react-app/lib/supabase-helpers";
 
 interface Estudiante {
   id: number;
@@ -74,11 +75,8 @@ export default function AdminStudents() {
 
   const fetchEstudiantes = async () => {
     try {
-      const response = await fetch("/api/estudiantes");
-      if (response.ok) {
-        const data = await response.json();
-        setEstudiantes(Array.isArray(data) ? data : []);
-      }
+      const data = await getEstudiantes();
+      setEstudiantes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching estudiantes:", error);
     } finally {
@@ -88,11 +86,8 @@ export default function AdminStudents() {
 
   const fetchCursos = async () => {
     try {
-      const response = await fetch("/api/cursos");
-      if (response.ok) {
-        const data = await response.json();
-        setCursos(Array.isArray(data) ? data : []);
-      }
+      const data = await getCursos();
+      setCursos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching cursos:", error);
     }
@@ -144,7 +139,7 @@ export default function AdminStudents() {
 
       if (response.ok) {
         const result = await response.json();
-        
+
         // If creating a new student and course is selected, enroll them
         if (!editingEstudiante && formData.id_curso_actual) {
           await fetch(`/api/cursos/${formData.id_curso_actual}/estudiantes`, {
@@ -153,7 +148,7 @@ export default function AdminStudents() {
             body: JSON.stringify({ id_estudiante: result.id }),
           });
         }
-        
+
         // If editing and course changed, update enrollment
         if (editingEstudiante && formData.id_curso_actual) {
           if (editingEstudiante.id_curso_actual !== Number(formData.id_curso_actual)) {
@@ -163,7 +158,7 @@ export default function AdminStudents() {
                 method: "DELETE",
               });
             }
-            
+
             // Enroll in new course
             await fetch(`/api/cursos/${formData.id_curso_actual}/estudiantes`, {
               method: "POST",
@@ -172,7 +167,7 @@ export default function AdminStudents() {
             });
           }
         }
-        
+
         fetchEstudiantes();
         closeModal();
       } else {
@@ -207,7 +202,7 @@ export default function AdminStudents() {
     try {
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim());
-      
+
       if (lines.length === 0) {
         alert("El archivo CSV está vacío");
         setUploadingCSV(false);
@@ -216,11 +211,11 @@ export default function AdminStudents() {
 
       // Parse CSV header
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      
+
       // Expected headers
       const requiredHeaders = ['nombre', 'apellido'];
       const hasRequired = requiredHeaders.every(h => headers.includes(h));
-      
+
       if (!hasRequired) {
         alert("El CSV debe contener las columnas: nombre, apellido (las demás son opcionales: fecha_nacimiento, nombre_tutor, telefono_tutor, email_tutor, direccion_tutor)");
         setUploadingCSV(false);
@@ -232,7 +227,7 @@ export default function AdminStudents() {
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         const student: any = {};
-        
+
         headers.forEach((header, index) => {
           const value = values[index] || '';
           student[header] = value;
@@ -795,7 +790,7 @@ export default function AdminStudents() {
 
               <div className="border-t border-gray-200 pt-4 mt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Datos del Tutor</h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
