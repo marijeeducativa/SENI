@@ -605,11 +605,16 @@ export async function saveConfiguracionCentro(config: any) {
             .from('configuracion_centro')
             .update({
                 nombre_centro: config.nombre_centro,
-                director: config.director,
-                telefono: config.telefono,
+                codigo_centro: config.codigo_centro,
                 direccion: config.direccion,
+                telefono: config.telefono,
                 email: config.email,
-                logo_url: config.logo_url,
+                regional: config.regional,
+                distrito: config.distrito,
+                logo_minerd_url: config.logo_minerd_url,
+                logo_centro_url: config.logo_centro_url,
+                director_nombre: config.director_nombre,
+                anio_escolar_actual: config.anio_escolar_actual,
                 updated_at: new Date().toISOString()
             })
             .eq('id', existing.id)
@@ -618,11 +623,16 @@ export async function saveConfiguracionCentro(config: any) {
             .from('configuracion_centro')
             .insert({
                 nombre_centro: config.nombre_centro,
-                director: config.director,
-                telefono: config.telefono,
+                codigo_centro: config.codigo_centro,
                 direccion: config.direccion,
+                telefono: config.telefono,
                 email: config.email,
-                logo_url: config.logo_url
+                regional: config.regional,
+                distrito: config.distrito,
+                logo_minerd_url: config.logo_minerd_url,
+                logo_centro_url: config.logo_centro_url,
+                director_nombre: config.director_nombre,
+                anio_escolar_actual: config.anio_escolar_actual
             })
     }
 
