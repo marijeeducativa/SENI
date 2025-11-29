@@ -1,3 +1,4 @@
+import { getEstudiantes, getBoletinData } from "@/react-app/lib/supabase-helpers";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, Printer, Loader2 } from "lucide-react";
@@ -66,32 +67,23 @@ export default function BulkBulletinPrint() {
   const fetchAllBulletins = async () => {
     try {
       // First get all students in the course
-      const estudiantesResponse = await fetch(`/api/teacher/cursos/${cursoId}/estudiantes`, {
-        credentials: "include",
-      });
+      const estudiantesData = await getEstudiantes();
+      const estudiantesCurso = estudiantesData.filter((e: any) => e.id_curso_actual === Number(cursoId));
 
-      if (!estudiantesResponse.ok) {
-        throw new Error("Failed to fetch students");
-      }
-
-      const estudiantes = await estudiantesResponse.json();
-      setLoadingProgress({ current: 0, total: estudiantes.length });
+      setLoadingProgress({ current: 0, total: estudiantesCurso.length });
 
       // Fetch bulletin data for each student
       const bulletins: BulletinData[] = [];
 
-      for (let i = 0; i < estudiantes.length; i++) {
-        const estudiante = estudiantes[i];
-        setLoadingProgress({ current: i + 1, total: estudiantes.length });
+      for (let i = 0; i < estudiantesCurso.length; i++) {
+        const estudiante = estudiantesCurso[i];
+        setLoadingProgress({ current: i + 1, total: estudiantesCurso.length });
 
-        const bulletinResponse = await fetch(
-          `/api/teacher/estudiantes/${estudiante.id}/boletin`,
-          { credentials: "include" }
-        );
-
-        if (bulletinResponse.ok) {
-          const bulletinData = await bulletinResponse.json();
-          bulletins.push(bulletinData);
+        try {
+          const bulletinData = await getBoletinData(estudiante.id);
+          bulletins.push(bulletinData as any);
+        } catch (err) {
+          console.error(`Error fetching bulletin for student ${estudiante.id}:`, err);
         }
       }
 

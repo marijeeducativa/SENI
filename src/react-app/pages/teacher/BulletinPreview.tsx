@@ -1,3 +1,4 @@
+import { getBoletinData } from "@/react-app/lib/supabase-helpers";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, Printer } from "lucide-react";
@@ -89,16 +90,9 @@ export default function BulletinPreview() {
 
   const fetchBulletinData = async () => {
     try {
-      const response = await fetch(`/api/teacher/estudiantes/${estudianteId}/boletin`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const bulletinData = await response.json();
-        setData(bulletinData);
-      } else {
-        const err = await response.json();
-        setError(err.error || "Error al cargar datos");
-      }
+      if (!estudianteId) return;
+      const bulletinData = await getBoletinData(Number(estudianteId));
+      setData(bulletinData as any);
     } catch (error: any) {
       console.error("Error fetching bulletin data:", error);
       setError(error.message || "Error de conexión");

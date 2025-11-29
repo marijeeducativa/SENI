@@ -2,6 +2,7 @@ import { useAuth } from "@/react-app/contexts/AuthContext";
 import { useNavigate, useParams } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import { LogOut, ArrowLeft, ChevronLeft, ChevronRight, FileText, Edit2, MessageSquare } from "lucide-react";
+import { getCursos, getEstudiantes, getIndicadores, getEvaluaciones, saveEvaluacion, getObservaciones, saveObservacion } from "@/react-app/lib/supabase-helpers";
 
 interface Estudiante {
   id: number;
@@ -143,222 +144,216 @@ export default function EvaluateStudent() {
         searchPattern = currentEstudiante.nivel_parvulo;
       }
 
-      const indicadoresResponse = await fetch(
-        `/api/teacher/estudiantes/${currentEstudiante.id}/indicadores?curso=${encodeURIComponent(searchPattern)}`,
-        { credentials: "include" }
-      );
+      const data = await getIndicadores(searchPattern);
+      let sortedData = Array.isArray(data) ? data.sort((a: any, b: any) => a.orden - b.orden) : [];
 
-      if (indicadoresResponse.ok) {
-        const data = await indicadoresResponse.json();
-        let sortedData = Array.isArray(data) ? data.sort((a: any, b: any) => a.orden - b.orden) : [];
+      // Apply strict filtering and categorization for Párvulo I
+      if (["Párvulo I", "Parvulo I", "Párvulo 1", "Parvulo 1"].includes(curso.nombre_curso)) {
+        // ... (Logic remains the same, just removing the fetch call)
+        // Define buckets
+        const relacionesList = [
+          // Etapa 1
+          "Expresa necesidades y sentimientos (llanto, gestos).",
+          "Muestra agrado ante demostraciones de afecto.",
+          "Imita reacciones que ve en sus cuidadores.",
+          "Explora su entorno cercano con apoyo.",
+          "Reacciona al escuchar su nombre.",
+          // Etapa 2
+          "Expresa sentimientos/necesidades con vocalizaciones.",
+          "Reacciona ante afecto de familiares y extraños.",
+          "Demuestra apego y se separa por corto tiempo.",
+          "Participa en higiene y alimentación.",
+          "Reconoce su imagen en diferentes representaciones.",
+          "Reconoce por su nombre a miembros de su familia.",
+          "Explora por sí solo y reconoce objetos.",
+          "Imita normas sociales en interacciones."
+        ];
 
-        // Apply strict filtering and categorization for Párvulo I
-        if (["Párvulo I", "Parvulo I", "Párvulo 1", "Parvulo 1"].includes(curso.nombre_curso)) {
-          // Define buckets
-          const relacionesList = [
-            // Etapa 1
-            "Expresa necesidades y sentimientos (llanto, gestos).",
-            "Muestra agrado ante demostraciones de afecto.",
-            "Imita reacciones que ve en sus cuidadores.",
-            "Explora su entorno cercano con apoyo.",
-            "Reacciona al escuchar su nombre.",
-            // Etapa 2
-            "Expresa sentimientos/necesidades con vocalizaciones.",
-            "Reacciona ante afecto de familiares y extraños.",
-            "Demuestra apego y se separa por corto tiempo.",
-            "Participa en higiene y alimentación.",
-            "Reconoce su imagen en diferentes representaciones.",
-            "Reconoce por su nombre a miembros de su familia.",
-            "Explora por sí solo y reconoce objetos.",
-            "Imita normas sociales en interacciones."
-          ];
+        const lenguajeList = [
+          // Etapa 1
+          "Presta atención a la interacción comunicativa.",
+          "Crea significados a partir de la narración del adulto.",
+          "Expresa necesidades con gestos globales y contacto visual.",
+          "Observa con interés objetos e imágenes.",
+          // Etapa 2
+          "Imita gestos/expresiones para necesidades.",
+          "Usa espontáneamente gestos con pares/adultos.",
+          "Comprende informaciones durante la conversación.",
+          "Interactúa con libros e imágenes literarias."
+        ];
 
-          const lenguajeList = [
-            // Etapa 1
-            "Presta atención a la interacción comunicativa.",
-            "Crea significados a partir de la narración del adulto.",
-            "Expresa necesidades con gestos globales y contacto visual.",
-            "Observa con interés objetos e imágenes.",
-            // Etapa 2
-            "Imita gestos/expresiones para necesidades.",
-            "Usa espontáneamente gestos con pares/adultos.",
-            "Comprende informaciones durante la conversación.",
-            "Interactúa con libros e imágenes literarias."
-          ];
+        const descubrimientoList = [
+          // Etapa 1
+          "Sostiene la cabeza y busca sonidos.",
+          "Percibe partes de su cuerpo mediante masajes.",
+          "Juega con manos y pies usando juguetes.",
+          "Manifiesta emociones espontáneamente (movimientos).",
+          "Realiza expresiones faciales ante situaciones.",
+          "Empuja su cuerpo con las piernas.",
+          "Gira su cuerpo 360 grados (abdomen).",
+          "Arrastra su cuerpo (patrón cruzado).",
+          "Alcanza objetos boca abajo impulsándose.",
+          "Balancea su cuerpo de derecha a izquierda.",
+          "Desplaza su cuerpo gateando/arrastrándose.",
+          "Manifiesta alegría al verse en espejo.",
+          // Etapa 2
+          "Se pone de pie con apoyo.",
+          "Mantiene el equilibrio de sentado a parado.",
+          "Toca partes de su cuerpo imitando al adulto.",
+          "Imita movimientos sencillos de manos/brazos.",
+          "Desplaza su cuerpo gateando.",
+          "Gira su cuerpo rodando.",
+          "Arrastra su cuerpo reptando.",
+          "Alcanza objetos impulsándose.",
+          "Interactúa con juguetes y objetos cotidianos.",
+          "Entra y saca objetos de una caja.",
+          "Aprieta y suelta objetos blandos."
+        ];
 
-          const descubrimientoList = [
-            // Etapa 1
-            "Sostiene la cabeza y busca sonidos.",
-            "Percibe partes de su cuerpo mediante masajes.",
-            "Juega con manos y pies usando juguetes.",
-            "Manifiesta emociones espontáneamente (movimientos).",
-            "Realiza expresiones faciales ante situaciones.",
-            "Empuja su cuerpo con las piernas.",
-            "Gira su cuerpo 360 grados (abdomen).",
-            "Arrastra su cuerpo (patrón cruzado).",
-            "Alcanza objetos boca abajo impulsándose.",
-            "Balancea su cuerpo de derecha a izquierda.",
-            "Desplaza su cuerpo gateando/arrastrándose.",
-            "Manifiesta alegría al verse en espejo.",
-            // Etapa 2
-            "Se pone de pie con apoyo.",
-            "Mantiene el equilibrio de sentado a parado.",
-            "Toca partes de su cuerpo imitando al adulto.",
-            "Imita movimientos sencillos de manos/brazos.",
-            "Desplaza su cuerpo gateando.",
-            "Gira su cuerpo rodando.",
-            "Arrastra su cuerpo reptando.",
-            "Alcanza objetos impulsándose.",
-            "Interactúa con juguetes y objetos cotidianos.",
-            "Entra y saca objetos de una caja.",
-            "Aprieta y suelta objetos blandos."
-          ];
-
-          // Helper to check if indicator matches a list of strings
-          const isInList = (ind: any, list: string[]) => {
-            const descNorm = normalizeString(ind.descripcion);
-            return list.some(item => {
-              const itemNorm = normalizeString(item);
-              return descNorm === itemNorm || descNorm.includes(itemNorm) || itemNorm.includes(descNorm);
-            });
-          };
-
-          // Categorize indicators
-          const relaciones = sortedData
-            .filter((ind: any) => isInList(ind, relacionesList))
-            .map((ind: any) => ({ ...ind, nombre_categoria: "RELACIONES SOCIOAFECTIVAS" }));
-
-          const lenguaje = sortedData
-            .filter((ind: any) => isInList(ind, lenguajeList))
-            .map((ind: any) => ({ ...ind, nombre_categoria: "LENGUAJE E INTERACCIÓN" }));
-
-          const descubrimiento = sortedData
-            .filter((ind: any) => isInList(ind, descubrimientoList))
-            .map((ind: any) => ({ ...ind, nombre_categoria: "DESCUBRIMIENTO DEL CUERPO Y ENTORNO" }));
-
-          // Find any indicators that didn't match any list
-          const categorizedIds = new Set([
-            ...relaciones.map((i: any) => i.id),
-            ...lenguaje.map((i: any) => i.id),
-            ...descubrimiento.map((i: any) => i.id)
-          ]);
-
-          const others = sortedData.filter((ind: any) => !categorizedIds.has(ind.id));
-
-          // Sort
-          const sortFn = (a: any, b: any) => a.orden - b.orden;
-          relaciones.sort(sortFn);
-          lenguaje.sort(sortFn);
-          descubrimiento.sort(sortFn);
-          others.sort(sortFn);
-
-          sortedData = [...relaciones, ...lenguaje, ...descubrimiento, ...others];
-        }
-
-        // Apply strict filtering and categorization for Párvulo II
-        if (curso.nombre_curso === "Párvulo II" || curso.nombre_curso === "Parvulo II") {
-          // Filter indicators to ONLY include those in the whitelist (using strict normalized matching)
-          const validIndicators = sortedData.filter((ind: any) => {
-            const currentDescNorm = normalizeString(ind.descripcion);
-
-            const matchesValue = Object.values(PARVULO_II_INDICATORS).some(val =>
-              normalizeString(val) === currentDescNorm
-            );
-            if (matchesValue) return true;
-
-            const matchesKey = Object.keys(PARVULO_II_INDICATORS).some(key =>
-              normalizeString(key) === currentDescNorm
-            );
-            return matchesKey;
+        // Helper to check if indicator matches a list of strings
+        const isInList = (ind: any, list: string[]) => {
+          const descNorm = normalizeString(ind.descripcion);
+          return list.some(item => {
+            const itemNorm = normalizeString(item);
+            return descNorm === itemNorm || descNorm.includes(itemNorm) || itemNorm.includes(descNorm);
           });
+        };
 
-          // Define exact lists for each section
-          const relacionesList = [
-            "Reconoce objetos y espacios habituales.",
-            "Usa normas sociales en interacciones (si se solicita).",
-            "Usa normas sociales en interacciones.",
-            "Expresa sentimientos y afectos hacia otros.",
-            "Juega explorando el ambiente con seguridad.",
-            "Decide qué actividad le gusta o no realizar.",
-            "Se identifica a sí mismo y a otros en fotos/imágenes.",
-            "Responde y expresa su nombre.",
-            "Tolera que otros usen juguetes u objetos comunes."
-          ];
+        // Categorize indicators
+        const relaciones = sortedData
+          .filter((ind: any) => isInList(ind, relacionesList))
+          .map((ind: any) => ({ ...ind, nombre_categoria: "RELACIONES SOCIOAFECTIVAS" }));
 
-          const lenguaje1List = [
-            "Reconoce objetos/personas al ser nombrados.",
-            "Sigue instrucciones simples de rutina.",
-            "Responde preguntas simples."
-          ];
+        const lenguaje = sortedData
+          .filter((ind: any) => isInList(ind, lenguajeList))
+          .map((ind: any) => ({ ...ind, nombre_categoria: "LENGUAJE E INTERACCIÓN" }));
 
-          const lenguaje2List = [
-            "Imita sonidos/movimientos de cuentos y canciones.",
-            "Expresa necesidades con palabras/gestos/frases.",
-            "Nombra objetos y acciones mientras juega.",
-            "Elige e imita leer libros ilustrados.",
-            "Formula preguntas al explorar libros."
-          ];
+        const descubrimiento = sortedData
+          .filter((ind: any) => isInList(ind, descubrimientoList))
+          .map((ind: any) => ({ ...ind, nombre_categoria: "DESCUBRIMIENTO DEL CUERPO Y ENTORNO" }));
 
-          const descubrimientoList = [
-            "Controla su cuerpo al pararse sin apoyo.",
-            "Manipula objetos para producir sonidos (ritmo).",
-            "Usa manos para orientar pelotas/objetos.",
-            "Coordina ojo-pie/ojo-mano (patear, atrapar).",
-            "Expresa ideas gráficamente (garabateo).",
-            "Realiza juegos de arrastre, empuje y golpeo."
-          ];
+        // Find any indicators that didn't match any list
+        const categorizedIds = new Set([
+          ...relaciones.map((i: any) => i.id),
+          ...lenguaje.map((i: any) => i.id),
+          ...descubrimiento.map((i: any) => i.id)
+        ]);
 
-          // Helper to check if indicator belongs to a list
-          const isInList = (ind: any, list: string[]) => {
-            const descNorm = normalizeString(ind.descripcion);
-            return list.some(item => {
-              const itemNorm = normalizeString(item);
-              return descNorm === itemNorm || descNorm.includes(itemNorm) || itemNorm.includes(descNorm);
-            });
-          };
+        const others = sortedData.filter((ind: any) => !categorizedIds.has(ind.id));
 
-          // Distribute valid indicators into buckets
-          const relacionesSocioafectivas = validIndicators
-            .filter((ind: any) => isInList(ind, relacionesList))
-            .map((ind: any) => ({ ...ind, nombre_categoria: "RELACIONES SOCIOAFECTIVAS E IDENTIDAD" }));
+        // Sort
+        const sortFn = (a: any, b: any) => a.orden - b.orden;
+        relaciones.sort(sortFn);
+        lenguaje.sort(sortFn);
+        descubrimiento.sort(sortFn);
+        others.sort(sortFn);
 
-          const lenguajeParte1 = validIndicators
-            .filter((ind: any) => isInList(ind, lenguaje1List))
-            .map((ind: any) => ({ ...ind, nombre_categoria: "LENGUAJE E INTERACCIÓN (Parte I)" }));
-
-          const lenguajeParte2 = validIndicators
-            .filter((ind: any) => isInList(ind, lenguaje2List))
-            .map((ind: any) => ({ ...ind, nombre_categoria: "LENGUAJE E INTERACCIÓN (Parte II)" }));
-
-          const descubrimientoEntorno = validIndicators
-            .filter((ind: any) => isInList(ind, descubrimientoList))
-            .map((ind: any) => ({ ...ind, nombre_categoria: "DESCUBRIMIENTO DEL CUERPO Y ENTORNO" }));
-
-          // Sort each bucket
-          const sortFn = (a: any, b: any) => a.orden - b.orden;
-          relacionesSocioafectivas.sort(sortFn);
-          descubrimientoEntorno.sort(sortFn);
-
-          // Explicit sort for Lenguaje 1 and 2
-          const sortByList = (list: string[]) => (a: any, b: any) => {
-            const idxA = list.findIndex(l => normalizeString(l) === normalizeString(a.descripcion));
-            const idxB = list.findIndex(l => normalizeString(l) === normalizeString(b.descripcion));
-            return idxA - idxB;
-          };
-          lenguajeParte1.sort(sortByList(lenguaje1List));
-          lenguajeParte2.sort(sortByList(lenguaje2List));
-
-          // Combine all indicators in the correct order
-          sortedData = [
-            ...relacionesSocioafectivas,
-            ...lenguajeParte1,
-            ...lenguajeParte2,
-            ...descubrimientoEntorno
-          ];
-        }
-
-        setIndicadores(sortedData);
+        sortedData = [...relaciones, ...lenguaje, ...descubrimiento, ...others];
       }
+
+      // Apply strict filtering and categorization for Párvulo II
+      if (curso.nombre_curso === "Párvulo II" || curso.nombre_curso === "Parvulo II") {
+        // Filter indicators to ONLY include those in the whitelist (using strict normalized matching)
+        const validIndicators = sortedData.filter((ind: any) => {
+          const currentDescNorm = normalizeString(ind.descripcion);
+
+          const matchesValue = Object.values(PARVULO_II_INDICATORS).some(val =>
+            normalizeString(val) === currentDescNorm
+          );
+          if (matchesValue) return true;
+
+          const matchesKey = Object.keys(PARVULO_II_INDICATORS).some(key =>
+            normalizeString(key) === currentDescNorm
+          );
+          return matchesKey;
+        });
+
+        // Define exact lists for each section
+        const relacionesList = [
+          "Reconoce objetos y espacios habituales.",
+          "Usa normas sociales en interacciones (si se solicita).",
+          "Usa normas sociales en interacciones.",
+          "Expresa sentimientos y afectos hacia otros.",
+          "Juega explorando el ambiente con seguridad.",
+          "Decide qué actividad le gusta o no realizar.",
+          "Se identifica a sí mismo y a otros en fotos/imágenes.",
+          "Responde y expresa su nombre.",
+          "Tolera que otros usen juguetes u objetos comunes."
+        ];
+
+        const lenguaje1List = [
+          "Reconoce objetos/personas al ser nombrados.",
+          "Sigue instrucciones simples de rutina.",
+          "Responde preguntas simples."
+        ];
+
+        const lenguaje2List = [
+          "Imita sonidos/movimientos de cuentos y canciones.",
+          "Expresa necesidades con palabras/gestos/frases.",
+          "Nombra objetos y acciones mientras juega.",
+          "Elige e imita leer libros ilustrados.",
+          "Formula preguntas al explorar libros."
+        ];
+
+        const descubrimientoList = [
+          "Controla su cuerpo al pararse sin apoyo.",
+          "Manipula objetos para producir sonidos (ritmo).",
+          "Usa manos para orientar pelotas/objetos.",
+          "Coordina ojo-pie/ojo-mano (patear, atrapar).",
+          "Expresa ideas gráficamente (garabateo).",
+          "Realiza juegos de arrastre, empuje y golpeo."
+        ];
+
+        // Helper to check if indicator belongs to a list
+        const isInList = (ind: any, list: string[]) => {
+          const descNorm = normalizeString(ind.descripcion);
+          return list.some(item => {
+            const itemNorm = normalizeString(item);
+            return descNorm === itemNorm || descNorm.includes(itemNorm) || itemNorm.includes(descNorm);
+          });
+        };
+
+        // Distribute valid indicators into buckets
+        const relacionesSocioafectivas = validIndicators
+          .filter((ind: any) => isInList(ind, relacionesList))
+          .map((ind: any) => ({ ...ind, nombre_categoria: "RELACIONES SOCIOAFECTIVAS E IDENTIDAD" }));
+
+        const lenguajeParte1 = validIndicators
+          .filter((ind: any) => isInList(ind, lenguaje1List))
+          .map((ind: any) => ({ ...ind, nombre_categoria: "LENGUAJE E INTERACCIÓN (Parte I)" }));
+
+        const lenguajeParte2 = validIndicators
+          .filter((ind: any) => isInList(ind, lenguaje2List))
+          .map((ind: any) => ({ ...ind, nombre_categoria: "LENGUAJE E INTERACCIÓN (Parte II)" }));
+
+        const descubrimientoEntorno = validIndicators
+          .filter((ind: any) => isInList(ind, descubrimientoList))
+          .map((ind: any) => ({ ...ind, nombre_categoria: "DESCUBRIMIENTO DEL CUERPO Y ENTORNO" }));
+
+        // Sort each bucket
+        const sortFn = (a: any, b: any) => a.orden - b.orden;
+        relacionesSocioafectivas.sort(sortFn);
+        descubrimientoEntorno.sort(sortFn);
+
+        // Explicit sort for Lenguaje 1 and 2
+        const sortByList = (list: string[]) => (a: any, b: any) => {
+          const idxA = list.findIndex(l => normalizeString(l) === normalizeString(a.descripcion));
+          const idxB = list.findIndex(l => normalizeString(l) === normalizeString(b.descripcion));
+          return idxA - idxB;
+        };
+        lenguajeParte1.sort(sortByList(lenguaje1List));
+        lenguajeParte2.sort(sortByList(lenguaje2List));
+
+        // Combine all indicators in the correct order
+        sortedData = [
+          ...relacionesSocioafectivas,
+          ...lenguajeParte1,
+          ...lenguajeParte2,
+          ...descubrimientoEntorno
+        ];
+      }
+
+      setIndicadores(sortedData);
     } catch (error) {
       console.error("Error fetching indicators for student:", error);
     }
@@ -367,31 +362,23 @@ export default function EvaluateStudent() {
   const fetchInitialData = async () => {
     try {
       // Fetch course info
-      const cursosResponse = await fetch("/api/teacher/cursos", {
-        credentials: "include",
-      });
-      if (cursosResponse.ok) {
-        const cursos = await cursosResponse.json();
-        const cursoActual = cursos.find((c: Curso) => c.id === Number(cursoId));
-        if (cursoActual) {
-          setCurso(cursoActual);
-        }
+      const cursosData = await getCursos();
+      const cursoActual = cursosData.find((c: any) => c.id === Number(cursoId));
+      if (cursoActual) {
+        setCurso(cursoActual);
       }
 
-      // Fetch all students in this course
-      const estudiantesResponse = await fetch(`/api/teacher/cursos/${cursoId}/estudiantes`, {
-        credentials: "include",
-      });
-      if (estudiantesResponse.ok) {
-        const estudiantesData = await estudiantesResponse.json();
-        setEstudiantes(Array.isArray(estudiantesData) ? estudiantesData : []);
+      // Fetch all students
+      const estudiantesData = await getEstudiantes();
+      // Filter by course
+      const estudiantesCurso = estudiantesData.filter((e: any) => e.id_curso_actual === Number(cursoId));
+      setEstudiantes(estudiantesCurso);
 
-        // Find current student index
-        if (estudianteId) {
-          const index = estudiantesData.findIndex((e: Estudiante) => e.id === Number(estudianteId));
-          if (index !== -1) {
-            setCurrentEstudianteIndex(index);
-          }
+      // Find current student index
+      if (estudianteId) {
+        const index = estudiantesCurso.findIndex((e: any) => e.id === Number(estudianteId));
+        if (index !== -1) {
+          setCurrentEstudianteIndex(index);
         }
       }
     } catch (error) {
@@ -405,20 +392,25 @@ export default function EvaluateStudent() {
     if (!currentEstudiante) return;
 
     try {
-      // Fetch evaluations for all periods
-      const promises = PERIODOS.map((periodo) =>
-        fetch(
-          `/api/teacher/estudiantes/${currentEstudiante.id}/evaluaciones?periodo=${encodeURIComponent(periodo)}`,
-          { credentials: "include" }
-        ).then(res => res.ok ? res.json() : {})
-      );
-
-      const results = await Promise.all(promises);
+      // Fetch all evaluations for the student (no period filter to get all)
+      const data = await getEvaluaciones(currentEstudiante.id);
 
       const evaluacionesData: EvaluacionData = {};
-      results.forEach((evaluacionesMap, periodoIndex) => {
-        evaluacionesData[periodoIndex] = evaluacionesMap || {};
+
+      // Initialize structure
+      PERIODOS.forEach((_, idx) => {
+        evaluacionesData[idx] = {};
       });
+
+      // Populate data
+      if (Array.isArray(data)) {
+        data.forEach((ev: any) => {
+          const pIdx = PERIODOS.indexOf(ev.periodo_evaluacion);
+          if (pIdx !== -1) {
+            evaluacionesData[pIdx][ev.id_indicador] = ev.valor_evaluacion;
+          }
+        });
+      }
 
       setEvaluaciones(evaluacionesData);
 
@@ -426,27 +418,29 @@ export default function EvaluateStudent() {
       const visualMarksData: VisualMarksData = {};
 
       // For each indicator, if it's marked "Adquirido" in a period, show it visually in future periods
-      indicadores.forEach((ind) => {
-        let foundAdquirido = false;
-        for (let pIdx = 0; pIdx < PERIODOS.length; pIdx++) {
-          if (!visualMarksData[pIdx]) {
-            visualMarksData[pIdx] = {};
-          }
+      if (indicadores) {
+        indicadores.forEach((ind) => {
+          let foundAdquirido = false;
+          for (let pIdx = 0; pIdx < PERIODOS.length; pIdx++) {
+            if (!visualMarksData[pIdx]) {
+              visualMarksData[pIdx] = {};
+            }
 
-          if (evaluacionesData[pIdx]?.[ind.id] === "Adquirido") {
-            foundAdquirido = true;
-          }
+            if (evaluacionesData[pIdx]?.[ind.id] === "Adquirido") {
+              foundAdquirido = true;
+            }
 
-          // Mark visually in future periods if already acquired
-          if (foundAdquirido && pIdx > 0 && !evaluacionesData[pIdx]?.[ind.id]) {
-            visualMarksData[pIdx][ind.id] = true;
+            // Mark visually in future periods if already acquired
+            if (foundAdquirido && pIdx > 0 && !evaluacionesData[pIdx]?.[ind.id]) {
+              visualMarksData[pIdx][ind.id] = true;
+            }
           }
-        }
-      });
+        });
+      }
 
       setVisualMarks(visualMarksData);
     } catch (error) {
-      console.error("Error fetching evaluaciones:", error);
+      console.error("Error fetching evaluations:", error);
     }
   };
 
@@ -454,29 +448,23 @@ export default function EvaluateStudent() {
     if (!currentEstudiante) return;
 
     try {
-      const response = await fetch(
-        `/api/teacher/estudiantes/${currentEstudiante.id}/observaciones`,
-        { credentials: "include" }
-      );
+      const data = await getObservaciones(currentEstudiante.id);
 
-      if (response.ok) {
-        const data = await response.json();
-        const observacionesData: Record<number, ObservacionData> = {};
-
+      const obsMap: Record<number, ObservacionData> = {};
+      if (Array.isArray(data)) {
         data.forEach((obs: any) => {
-          const periodoIndex = PERIODOS.indexOf(obs.periodo_evaluacion);
-          if (periodoIndex !== -1) {
-            observacionesData[periodoIndex] = {
+          const pIdx = PERIODOS.indexOf(obs.periodo_evaluacion);
+          if (pIdx !== -1) {
+            obsMap[pIdx] = {
               cualidades_destacar: obs.cualidades_destacar || "",
               necesita_apoyo: obs.necesita_apoyo || ""
             };
           }
         });
-
-        setObservaciones(observacionesData);
       }
+      setObservaciones(obsMap);
     } catch (error) {
-      console.error("Error fetching observaciones:", error);
+      console.error("Error fetching observations:", error);
     }
   };
 
@@ -524,23 +512,19 @@ export default function EvaluateStudent() {
       });
     }
 
-    // Save to backend - ONLY for the current period
-    setSaving(true);
+    // Save to backend
     try {
-      await fetch("/api/teacher/evaluaciones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          id_estudiante: currentEstudiante.id,
-          id_indicador: indicadorId,
-          periodo_evaluacion: PERIODOS[periodoIndex],
-          valor_evaluacion: newValue,
-          comentario: null,
-        }),
+      setSaving(true);
+      await saveEvaluacion({
+        id_estudiante: currentEstudiante.id,
+        id_indicador: indicadorId,
+        periodo_evaluacion: PERIODOS[periodoIndex],
+        valor_evaluacion: newValue,
+        comentario: ""
       });
     } catch (error) {
       console.error("Error saving evaluation:", error);
+      // Revert on error (optional, but good practice)
     } finally {
       setSaving(false);
     }
@@ -559,23 +543,19 @@ export default function EvaluateStudent() {
   const handleSaveObservacion = async (periodoIndex: number) => {
     if (!currentEstudiante) return;
 
-    const obs = observaciones[periodoIndex] || { cualidades_destacar: "", necesita_apoyo: "" };
+    const obs = observaciones[periodoIndex];
+    if (!obs) return;
 
-    setSaving(true);
     try {
-      await fetch("/api/teacher/observaciones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          id_estudiante: currentEstudiante.id,
-          periodo_evaluacion: PERIODOS[periodoIndex],
-          cualidades_destacar: obs.cualidades_destacar,
-          necesita_apoyo: obs.necesita_apoyo,
-        }),
+      setSaving(true);
+      await saveObservacion({
+        id_estudiante: currentEstudiante.id,
+        periodo_evaluacion: PERIODOS[periodoIndex],
+        cualidades_destacar: obs.cualidades_destacar,
+        necesita_apoyo: obs.necesita_apoyo
       });
     } catch (error) {
-      console.error("Error saving observacion:", error);
+      console.error("Error saving observation:", error);
     } finally {
       setSaving(false);
     }

@@ -2,6 +2,7 @@ import AdminLayout from "@/react-app/components/AdminLayout";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { FileStack, Printer } from "lucide-react";
+import { getCursos } from "@/react-app/lib/supabase-helpers";
 
 interface Curso {
   id: number;
@@ -23,13 +24,8 @@ export default function AdminBulkBulletins() {
 
   const fetchCursos = async () => {
     try {
-      const response = await fetch("/api/cursos", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCursos(Array.isArray(data) ? data : []);
-      }
+      const data = await getCursos();
+      setCursos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching cursos:", error);
     } finally {

@@ -1,6 +1,7 @@
 import AdminLayout from "@/react-app/components/AdminLayout";
 import { useState } from "react";
 import { Database, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { seedIndicadores } from "@/react-app/lib/supabase-helpers";
 
 export default function SeedIndicators() {
   const [loading, setLoading] = useState(false);
@@ -17,22 +18,19 @@ export default function SeedIndicators() {
     setMessage("");
 
     try {
-      const response = await fetch("/api/seed-indicators", {
-        method: "POST",
-      });
+      const result = await seedIndicadores();
 
-      if (response.ok) {
-        const data = await response.json();
+      if (result.success) {
         setStatus("success");
-        setMessage(`Indicadores cargados exitosamente. Total: ${data.count || "múltiples"} indicadores.`);
+        setMessage(`Indicadores cargados exitosamente. Total insertados: ${result.count}.`);
       } else {
-        const error = await response.json();
         setStatus("error");
-        setMessage(error.error || "Error al cargar los indicadores");
+        setMessage("Error al cargar los indicadores");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error seeding indicators:", error);
       setStatus("error");
-      setMessage("Error de conexión al cargar los indicadores");
+      setMessage(error.message || "Error de conexión al cargar los indicadores");
     } finally {
       setLoading(false);
     }

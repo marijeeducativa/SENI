@@ -1,7 +1,7 @@
 import AdminLayout from "@/react-app/components/AdminLayout";
 import { useEffect, useState, useRef } from "react";
 import { GraduationCap, Plus, Edit2, Trash2, X, Upload, ArrowRight, CheckSquare, Square } from "lucide-react";
-import { getEstudiantes, getCursos, createEstudiante, updateEstudiante, deleteEstudiante } from "@/react-app/lib/supabase-helpers";
+import { getEstudiantes, getCursos, createEstudiante, updateEstudiante, deleteEstudiante, createEstudiantesBulk, enrollEstudiante, unenrollEstudiante } from "@/react-app/lib/supabase-helpers";
 
 interface Estudiante {
   id: number;
@@ -96,9 +96,6 @@ export default function AdminStudents() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const url = editingEstudiante ? `/api/estudiantes/${editingEstudiante.id}` : "/api/estudiantes";
-    const method = editingEstudiante ? "PUT" : "POST";
-
     // Get selected course info to set grado_nivel
     let gradoNivel = "";
     if (formData.id_curso_actual) {
@@ -118,65 +115,43 @@ export default function AdminStudents() {
       }
     }
 
+    const studentData = {
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      genero: formData.genero || null,
+      fecha_nacimiento: formData.fecha_nacimiento || null,
+      grado_nivel: gradoNivel || null,
+      nivel_parvulo: formData.nivel_parvulo || null,
+      id_curso_actual: formData.id_curso_actual ? Number(formData.id_curso_actual) : null,
+      nombre_tutor: formData.nombre_tutor || null,
+      telefono_tutor: formData.telefono_tutor || null,
+      email_tutor: formData.email_tutor || null,
+      direccion_tutor: formData.direccion_tutor || null,
+    };
+
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          genero: formData.genero || null,
-          fecha_nacimiento: formData.fecha_nacimiento || null,
-          grado_nivel: gradoNivel || null,
-          nivel_parvulo: formData.nivel_parvulo || null,
-          id_curso_actual: formData.id_curso_actual ? Number(formData.id_curso_actual) : null,
-          nombre_tutor: formData.nombre_tutor || null,
-          telefono_tutor: formData.telefono_tutor || null,
-          email_tutor: formData.email_tutor || null,
-          direccion_tutor: formData.direccion_tutor || null,
-        }),
-      });
+      if (editingEstudiante) {
+        await updateEstudiante(editingEstudiante.id, studentData);
 
-      if (response.ok) {
-        const result = await response.json();
-
-        // If creating a new student and course is selected, enroll them
-        if (!editingEstudiante && formData.id_curso_actual) {
-          await fetch(`/api/cursos/${formData.id_curso_actual}/estudiantes`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_estudiante: result.id }),
-          });
-        }
-
-        // If editing and course changed, update enrollment
-        if (editingEstudiante && formData.id_curso_actual) {
-          if (editingEstudiante.id_curso_actual !== Number(formData.id_curso_actual)) {
-            // Remove from old course if exists
-            if (editingEstudiante.id_curso_actual) {
-              await fetch(`/api/cursos/${editingEstudiante.id_curso_actual}/estudiantes/${editingEstudiante.id}`, {
-                method: "DELETE",
-              });
-            }
-
-            // Enroll in new course
-            await fetch(`/api/cursos/${formData.id_curso_actual}/estudiantes`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id_estudiante: editingEstudiante.id }),
-            });
+        // If course changed, update enrollment
+        if (formData.id_curso_actual && editingEstudiante.id_curso_actual !== Number(formData.id_curso_actual)) {
+          // Remove from old course if exists
+          if (editingEstudiante.id_curso_actual) {
+            await unenrollEstudiante(editingEstudiante.id, editingEstudiante.id_curso_actual);
           }
+          // Enroll in new course
+          await enrollEstudiante(editingEstudiante.id, Number(formData.id_curso_actual));
         }
-
-        fetchEstudiantes();
-        closeModal();
       } else {
-        const error = await response.json();
-        alert(error.error || "Error al guardar el estudiante");
+        const newStudent = await createEstudiante(studentData);
+        // createEstudiante already handles enrollment if id_curso_actual is present
       }
-    } catch (error) {
+
+      fetchEstudiantes();
+      closeModal();
+    } catch (error: any) {
       console.error("Error saving estudiante:", error);
-      alert("Error al guardar el estudiante");
+      alert(error.message || "Error al guardar el estudiante");
     }
   };
 
@@ -184,12 +159,11 @@ export default function AdminStudents() {
     if (!confirm("¿Estás seguro de que deseas eliminar este estudiante?")) return;
 
     try {
-      const response = await fetch(`/api/estudiantes/${id}`, { method: "DELETE" });
-      if (response.ok) {
-        fetchEstudiantes();
-      }
+      await deleteEstudiante(id);
+      fetchEstudiantes();
     } catch (error) {
       console.error("Error deleting estudiante:", error);
+      alert("Error al eliminar el estudiante");
     }
   };
 
@@ -278,26 +252,16 @@ export default function AdminStudents() {
         id_curso_actual: Number(selectedCursoForCSV),
       }));
 
-      const response = await fetch("/api/estudiantes/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estudiantes: studentsToUpload }),
-      });
+      const result = await createEstudiantesBulk(studentsToUpload);
 
-      if (response.ok) {
-        const result = await response.json();
-        alert(`Se cargaron ${result.count} estudiantes exitosamente`);
-        fetchEstudiantes();
-        setShowCSVModal(false);
-        setCSVStudents([]);
-        setSelectedCursoForCSV("");
-      } else {
-        const error = await response.json();
-        alert(error.error || "Error al cargar los estudiantes");
-      }
-    } catch (error) {
+      alert(`Se cargaron ${result.length} estudiantes exitosamente`);
+      fetchEstudiantes();
+      setShowCSVModal(false);
+      setCSVStudents([]);
+      setSelectedCursoForCSV("");
+    } catch (error: any) {
       console.error("Error uploading students:", error);
-      alert("Error al cargar los estudiantes");
+      alert(error.message || "Error al cargar los estudiantes");
     }
   };
 
@@ -339,15 +303,15 @@ export default function AdminStudents() {
 
     try {
       for (const estudianteId of selectedStudents) {
-        await fetch(`/api/estudiantes/${estudianteId}`, { method: "DELETE" });
+        await deleteEstudiante(estudianteId);
       }
 
       alert(`Se eliminaron ${selectedStudents.size} estudiantes exitosamente`);
       setSelectedStudents(new Set());
       fetchEstudiantes();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting students:", error);
-      alert("Error al eliminar los estudiantes");
+      alert(error.message || "Error al eliminar los estudiantes");
     }
   };
 
@@ -375,36 +339,26 @@ export default function AdminStudents() {
         if (!estudiante) continue;
 
         // Update student record
-        await fetch(`/api/estudiantes/${estudianteId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nombre: estudiante.nombre,
-            apellido: estudiante.apellido,
-            genero: estudiante.genero,
-            fecha_nacimiento: estudiante.fecha_nacimiento,
-            grado_nivel: gradoNivel,
-            id_curso_actual: Number(targetCurso),
-            nombre_tutor: estudiante.nombre_tutor,
-            telefono_tutor: estudiante.telefono_tutor,
-            email_tutor: estudiante.email_tutor,
-            direccion_tutor: estudiante.direccion_tutor,
-          }),
+        await updateEstudiante(estudianteId, {
+          nombre: estudiante.nombre,
+          apellido: estudiante.apellido,
+          genero: estudiante.genero,
+          fecha_nacimiento: estudiante.fecha_nacimiento,
+          grado_nivel: gradoNivel,
+          id_curso_actual: Number(targetCurso),
+          nombre_tutor: estudiante.nombre_tutor,
+          telefono_tutor: estudiante.telefono_tutor,
+          email_tutor: estudiante.email_tutor,
+          direccion_tutor: estudiante.direccion_tutor,
         });
 
         // Remove from old course if exists
         if (estudiante.id_curso_actual) {
-          await fetch(`/api/cursos/${estudiante.id_curso_actual}/estudiantes/${estudianteId}`, {
-            method: "DELETE",
-          });
+          await unenrollEstudiante(estudianteId, estudiante.id_curso_actual);
         }
 
         // Enroll in new course
-        await fetch(`/api/cursos/${targetCurso}/estudiantes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id_estudiante: estudianteId }),
-        });
+        await enrollEstudiante(estudianteId, Number(targetCurso));
       }
 
       alert(`Se movieron ${selectedStudents.size} estudiantes exitosamente`);
@@ -412,9 +366,9 @@ export default function AdminStudents() {
       setTargetCurso("");
       setSelectedStudents(new Set());
       fetchEstudiantes();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error moving students:", error);
-      alert("Error al mover los estudiantes");
+      alert(error.message || "Error al mover los estudiantes");
     }
   };
 

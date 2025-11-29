@@ -29,26 +29,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
-        // Set cookie for API
+        // Set cookie for API (still needed if some API calls remain)
         document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
 
-        console.log('[AuthContext] Fetching user from API...');
-        const response = await fetch(getApiUrl("api/users/me"), {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
+        console.log('[AuthContext] Fetching user from Supabase...');
 
-        console.log('[AuthContext] API response status:', response.status);
+        // Fetch user details from 'usuarios' table using email
+        const { data: usuario, error } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('email', session.user.email)
+          .single();
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log('[AuthContext] User data received:', data);
-          setUser(data);
-        } else {
-          const errorText = await response.text();
-          console.error('[AuthContext] API error:', response.status, errorText);
+        if (error) {
+          console.error('[AuthContext] Error fetching user profile:', error);
           setUser(null);
+        } else if (usuario) {
+          console.log('[AuthContext] User data received:', usuario);
+          setUser(usuario);
         }
       } else {
         // Clear cookie

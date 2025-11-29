@@ -1,3 +1,4 @@
+import { getCursos, getEstudiantes, enrollEstudiante, unenrollEstudiante } from "@/react-app/lib/supabase-helpers";
 import { useAuth } from "@/react-app/contexts/AuthContext";
 import { useNavigate, useParams } from "react-router";
 import { useEffect, useState } from "react";
@@ -48,25 +49,16 @@ export default function TeacherCourseDetail() {
   const fetchCursoData = async () => {
     try {
       // Fetch course info
-      const cursosResponse = await fetch("/api/teacher/cursos", {
-        credentials: "include",
-      });
-      if (cursosResponse.ok) {
-        const cursos = await cursosResponse.json();
-        const cursoActual = cursos.find((c: Curso) => c.id === Number(id));
-        if (cursoActual) {
-          setCurso(cursoActual);
-        }
+      const cursosData = await getCursos();
+      const cursoActual = cursosData.find((c: any) => c.id === Number(id));
+      if (cursoActual) {
+        setCurso(cursoActual);
       }
 
       // Fetch students in this course
-      const estudiantesResponse = await fetch(`/api/teacher/cursos/${id}/estudiantes`, {
-        credentials: "include",
-      });
-      if (estudiantesResponse.ok) {
-        const data = await estudiantesResponse.json();
-        setEstudiantes(Array.isArray(data) ? data : []);
-      }
+      const estudiantesData = await getEstudiantes();
+      const estudiantesCurso = estudiantesData.filter((e: any) => e.id_curso_actual === Number(id));
+      setEstudiantes(estudiantesCurso);
     } catch (error) {
       console.error("Error fetching course data:", error);
     } finally {
@@ -76,17 +68,13 @@ export default function TeacherCourseDetail() {
 
   const fetchEstudiantesDisponibles = async () => {
     try {
-      const response = await fetch("/api/estudiantes", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const todos = await response.json();
-        // Filter out students already in this course
-        const disponibles = todos.filter(
-          (e: EstudianteDisponible) => !estudiantes.find((est) => est.id === e.id)
-        );
-        setEstudiantesDisponibles(disponibles);
-      }
+      const todos = await getEstudiantes();
+
+      // Filter out students already in this course
+      const disponibles = todos.filter(
+        (e: any) => !estudiantes.find((est) => est.id === e.id)
+      );
+      setEstudiantesDisponibles(disponibles);
     } catch (error) {
       console.error("Error fetching available students:", error);
     }
@@ -96,24 +84,13 @@ export default function TeacherCourseDetail() {
     if (!selectedEstudiante) return;
 
     try {
-      const response = await fetch(`/api/cursos/${id}/estudiantes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ id_estudiante: Number(selectedEstudiante) }),
-      });
-
-      if (response.ok) {
-        setShowAddModal(false);
-        setSelectedEstudiante("");
-        fetchCursoData();
-      } else {
-        const error = await response.json();
-        alert(error.error || "Error al agregar estudiante");
-      }
-    } catch (error) {
+      await enrollEstudiante(Number(selectedEstudiante), Number(id));
+      setShowAddModal(false);
+      setSelectedEstudiante("");
+      fetchCursoData();
+    } catch (error: any) {
       console.error("Error adding student:", error);
-      alert("Error al agregar estudiante");
+      alert(error.message || "Error al agregar estudiante");
     }
   };
 
@@ -121,14 +98,8 @@ export default function TeacherCourseDetail() {
     if (!confirm("¿Estás seguro de que deseas remover este estudiante del curso?")) return;
 
     try {
-      const response = await fetch(`/api/cursos/${id}/estudiantes/${estudianteId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        fetchCursoData();
-      }
+      await unenrollEstudiante(estudianteId, Number(id));
+      fetchCursoData();
     } catch (error) {
       console.error("Error removing student:", error);
     }

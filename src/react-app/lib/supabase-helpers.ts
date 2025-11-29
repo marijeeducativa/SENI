@@ -1,4 +1,5 @@
 import { supabase } from '../supabase'
+import { CATEGORIES_SEED, INDICATORS_SEED } from './seed-data';
 
 // ==================== AUTH ====================
 
@@ -183,7 +184,7 @@ export async function getEstudiantes() {
         const { data: estudiantes, error } = await supabase
             .from('estudiantes')
             .select('*')
-            .eq('is_active', true)
+            // .eq('is_active', true)
             .order('nombre')
             .order('apellido')
 
@@ -268,6 +269,87 @@ export async function deleteEstudiante(id: number) {
         .from('estudiantes')
         .update({ is_active: false, updated_at: new Date().toISOString() })
         .eq('id', id)
+
+    if (error) throw error
+}
+
+export async function createEstudiantesBulk(estudiantes: any[]) {
+    // 1. Get course info to set grado_nivel
+    const courseIds = [...new Set(estudiantes.map(e => e.id_curso_actual).filter(Boolean))]
+    let courseMap = new Map()
+
+    if (courseIds.length > 0) {
+        const { data: courses } = await supabase
+            .from('cursos')
+            .select('id, nombre_curso, seccion')
+            .in('id', courseIds)
+
+        courses?.forEach((c: any) => {
+            courseMap.set(c.id, `${c.nombre_curso}${c.seccion ? ` - Sección ${c.seccion}` : ''}`)
+        })
+    }
+
+    // 2. Prepare data
+    const studentsToInsert = estudiantes.map(est => ({
+        nombre: est.nombre,
+        apellido: est.apellido,
+        genero: est.genero,
+        fecha_nacimiento: est.fecha_nacimiento,
+        nombre_tutor: est.nombre_tutor,
+        telefono_tutor: est.telefono_tutor,
+        email_tutor: est.email_tutor,
+        direccion_tutor: est.direccion_tutor,
+        grado_nivel: est.id_curso_actual ? courseMap.get(est.id_curso_actual) : null,
+        id_curso_actual: est.id_curso_actual,
+        is_active: true
+    }))
+
+    // 3. Insert students
+    const { data, error } = await supabase
+        .from('estudiantes')
+        .insert(studentsToInsert)
+        .select()
+
+    if (error) throw error
+
+    // 4. Create enrollments
+    const enrollments = data
+        .filter((s: any) => s.id_curso_actual)
+        .map((s: any) => ({
+            id_estudiante: s.id,
+            id_curso: s.id_curso_actual,
+            fecha_inscripcion: new Date().toISOString()
+        }))
+
+    if (enrollments.length > 0) {
+        const { error: enrollError } = await supabase
+            .from('estudiantes_cursos')
+            .insert(enrollments)
+
+        if (enrollError) console.error('Error enrolling students:', enrollError)
+    }
+
+    return data
+}
+
+export async function enrollEstudiante(id_estudiante: number, id_curso: number) {
+    const { error } = await supabase
+        .from('estudiantes_cursos')
+        .insert({
+            id_estudiante,
+            id_curso,
+            fecha_inscripcion: new Date().toISOString()
+        })
+
+    if (error) throw error
+}
+
+export async function unenrollEstudiante(id_estudiante: number, id_curso: number) {
+    const { error } = await supabase
+        .from('estudiantes_cursos')
+        .delete()
+        .eq('id_estudiante', id_estudiante)
+        .eq('id_curso', id_curso)
 
     if (error) throw error
 }
@@ -376,5 +458,344 @@ export async function getStats() {
         estudiantes: estudiantes.count || 0,
         cursos: cursos.count || 0,
         evaluaciones: evaluaciones.count || 0
+    }
+}
+
+// ==================== EVALUACIONES ====================
+
+export async function getEvaluaciones(estudianteId: number, periodo?: string) {
+    let query = supabase
+        .from('evaluaciones')
+        .select('*')
+        .eq('id_estudiante', estudianteId)
+
+    if (periodo) {
+        query = query.eq('periodo_evaluacion', periodo)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    // Transform to map if needed, but returning array is standard
+    // The component expects a map: { [indicadorId]: valor }
+    if (periodo) {
+        const map: Record<number, string> = {}
+        data?.forEach((ev: any) => {
+            map[ev.id_indicador] = ev.valor_evaluacion
+        })
+        return map
+    }
+
+    return data
+}
+
+export async function saveEvaluacion(evaluacion: any) {
+    // Check if exists first to update or insert
+    const { data: existing } = await supabase
+        .from('evaluaciones')
+        .select('id')
+        .eq('id_estudiante', evaluacion.id_estudiante)
+        .eq('id_indicador', evaluacion.id_indicador)
+        .eq('periodo_evaluacion', evaluacion.periodo_evaluacion)
+        .maybeSingle()
+
+    let result
+    if (existing) {
+        if (evaluacion.valor_evaluacion === null) {
+            // Delete if null
+            result = await supabase
+                .from('evaluaciones')
+                .delete()
+                .eq('id', existing.id)
+        } else {
+            // Update
+            result = await supabase
+                .from('evaluaciones')
+                .update({
+                    valor_evaluacion: evaluacion.valor_evaluacion,
+                    comentario: evaluacion.comentario,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', existing.id)
+        }
+    } else {
+        if (evaluacion.valor_evaluacion === null) return // Don't insert nulls
+
+        // Insert
+        result = await supabase
+            .from('evaluaciones')
+            .insert({
+                id_estudiante: evaluacion.id_estudiante,
+                id_indicador: evaluacion.id_indicador,
+                periodo_evaluacion: evaluacion.periodo_evaluacion,
+                valor_evaluacion: evaluacion.valor_evaluacion,
+                comentario: evaluacion.comentario
+            })
+    }
+
+    if (result.error) throw result.error
+}
+
+// ==================== OBSERVACIONES ====================
+
+export async function getObservaciones(estudianteId: number) {
+    const { data, error } = await supabase
+        .from('observaciones_periodicas')
+        .select('*')
+        .eq('id_estudiante', estudianteId)
+
+    if (error) throw error
+    return data
+}
+
+export async function saveObservacion(observacion: any) {
+    const { data: existing } = await supabase
+        .from('observaciones_periodicas')
+        .select('id')
+        .eq('id_estudiante', observacion.id_estudiante)
+        .eq('periodo_evaluacion', observacion.periodo_evaluacion)
+        .maybeSingle()
+
+    let result
+    if (existing) {
+        result = await supabase
+            .from('observaciones_periodicas')
+            .update({
+                cualidades_destacar: observacion.cualidades_destacar,
+                necesita_apoyo: observacion.necesita_apoyo,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id)
+    } else {
+        result = await supabase
+            .from('observaciones_periodicas')
+            .insert({
+                id_estudiante: observacion.id_estudiante,
+                periodo_evaluacion: observacion.periodo_evaluacion,
+                cualidades_destacar: observacion.cualidades_destacar,
+                necesita_apoyo: observacion.necesita_apoyo
+            })
+    }
+
+    if (result.error) throw result.error
+}
+
+// ==================== CONFIGURACIÓN CENTRO ====================
+
+export async function getConfiguracionCentro() {
+    const { data, error } = await supabase
+        .from('configuracion_centro')
+        .select('*')
+        .maybeSingle()
+
+    if (error) throw error
+    return data
+}
+
+export async function saveConfiguracionCentro(config: any) {
+    const { data: existing } = await supabase
+        .from('configuracion_centro')
+        .select('id')
+        .maybeSingle()
+
+    let result
+    if (existing) {
+        result = await supabase
+            .from('configuracion_centro')
+            .update({
+                nombre_centro: config.nombre_centro,
+                director: config.director,
+                telefono: config.telefono,
+                direccion: config.direccion,
+                email: config.email,
+                logo_url: config.logo_url,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id)
+    } else {
+        result = await supabase
+            .from('configuracion_centro')
+            .insert({
+                nombre_centro: config.nombre_centro,
+                director: config.director,
+                telefono: config.telefono,
+                direccion: config.direccion,
+                email: config.email,
+                logo_url: config.logo_url
+            })
+    }
+
+    if (result.error) throw result.error
+}
+
+
+
+export async function seedIndicadores() {
+    try {
+        console.log("Starting indicator seeding process...");
+        let insertedCount = 0;
+
+        // 1. Create Categories
+        const categoryMap: Record<string, number> = {};
+
+        for (const cat of CATEGORIES_SEED) {
+            // Check if category exists
+            const { data: existing } = await supabase
+                .from('categorias_indicadores')
+                .select('id')
+                .eq('nombre_categoria', cat.nombre)
+                .single();
+
+            if (existing) {
+                categoryMap[cat.nombre] = existing.id;
+            } else {
+                const { data: newCat, error } = await supabase
+                    .from('categorias_indicadores')
+                    .insert({ nombre_categoria: cat.nombre, descripcion: cat.descripcion })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                if (newCat) categoryMap[cat.nombre] = newCat.id;
+            }
+        }
+
+        // 2. Insert Indicators
+        for (const ind of INDICATORS_SEED) {
+            const catId = categoryMap[ind.cat];
+            if (!catId) continue;
+
+            // Check if indicator exists
+            const { data: existing } = await supabase
+                .from('indicadores')
+                .select('id')
+                .eq('descripcion', ind.desc)
+                .eq('niveles_aplicables', ind.nivel)
+                .single();
+
+            if (!existing) {
+                const { error } = await supabase
+                    .from('indicadores')
+                    .insert({
+                        descripcion: ind.desc,
+                        id_categoria: catId,
+                        niveles_aplicables: ind.nivel,
+                        tipo_evaluacion: 'cualitativa',
+                        orden: ind.orden
+                    });
+
+                if (error) {
+                    console.error(`Error inserting indicator: ${ind.desc}`, error);
+                } else {
+                    insertedCount++;
+                }
+            }
+        }
+
+        return { success: true, count: insertedCount };
+    } catch (error) {
+        console.error("Error seeding indicators:", error);
+        throw error;
+    }
+}
+
+export async function getBoletinData(estudianteId: number) {
+    // ... (existing getBoletinData)
+    // 1. Get student info with course
+    const { data: estudiante, error: estError } = await supabase
+        .from('estudiantes')
+        .select(`
+            *,
+            cursos:id_curso_actual (
+                nombre_curso,
+                seccion,
+                anio_escolar,
+                usuarios:id_maestro (
+                    nombre,
+                    apellido
+                )
+            )
+        `)
+        .eq('id', estudianteId)
+        .single()
+
+    if (estError) throw estError
+
+    // 2. Get center config
+    const { data: config } = await supabase
+        .from('configuracion_centro')
+        .select('*')
+        .maybeSingle()
+
+    // 3. Get indicators for the course
+    // Logic similar to getIndicadores but we need to filter by course name
+    let cursoNombre = estudiante.cursos?.nombre_curso
+
+    // Handle Párvulo I levels
+    if (['Párvulo I', 'Parvulo I', 'Párvulo 1', 'Parvulo 1'].includes(cursoNombre) && estudiante.nivel_parvulo) {
+        cursoNombre = estudiante.nivel_parvulo
+    }
+
+    const { data: indicadores } = await supabase
+        .from('indicadores')
+        .select('*, categorias_indicadores(nombre_categoria)')
+        .eq('is_active', true)
+        .ilike('niveles_aplicables', `%${cursoNombre}%`)
+        .order('orden')
+        .order('id')
+
+    // Transform indicators to include category name directly
+    const indicadoresFormatted = indicadores?.map((i: any) => ({
+        ...i,
+        nombre_categoria: i.categorias_indicadores?.nombre_categoria
+    })) || []
+
+    // 4. Get evaluations
+    const { data: evaluaciones } = await supabase
+        .from('evaluaciones')
+        .select('*')
+        .eq('id_estudiante', estudianteId)
+
+    // Transform evaluations to nested map: { [periodo]: { [indicadorId]: valor } }
+    const evaluacionesMap: Record<string, Record<number, string>> = {}
+    evaluaciones?.forEach((ev: any) => {
+        if (!evaluacionesMap[ev.periodo_evaluacion]) {
+            evaluacionesMap[ev.periodo_evaluacion] = {}
+        }
+        evaluacionesMap[ev.periodo_evaluacion][ev.id_indicador] = ev.valor_evaluacion
+    })
+
+    // 5. Get observations
+    const { data: observaciones } = await supabase
+        .from('observaciones_periodicas')
+        .select('*')
+        .eq('id_estudiante', estudianteId)
+
+    // Transform observations to map: { [periodo]: { cualidades..., necesita... } }
+    const observacionesMap: Record<string, any> = {}
+    observaciones?.forEach((obs: any) => {
+        observacionesMap[obs.periodo_evaluacion] = {
+            cualidades_destacar: obs.cualidades_destacar,
+            necesita_apoyo: obs.necesita_apoyo
+        }
+    })
+
+    return {
+        estudiante: {
+            ...estudiante,
+            curso: estudiante.cursos?.nombre_curso,
+            seccion: estudiante.cursos?.seccion,
+            anio_escolar: estudiante.cursos?.anio_escolar,
+            grado_nivel: `${estudiante.cursos?.nombre_curso}${estudiante.cursos?.seccion ? ` - ${estudiante.cursos?.seccion}` : ''}`
+        },
+        maestro: {
+            nombre: estudiante.cursos?.usuarios?.nombre || '',
+            apellido: estudiante.cursos?.usuarios?.apellido || ''
+        },
+        config: config || {},
+        indicadores: indicadoresFormatted,
+        evaluaciones: evaluacionesMap,
+        observaciones: observacionesMap
     }
 }

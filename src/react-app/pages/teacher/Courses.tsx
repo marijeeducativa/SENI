@@ -1,3 +1,4 @@
+import { getCursos } from "@/react-app/lib/supabase-helpers";
 import { useAuth } from "@/react-app/contexts/AuthContext";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
@@ -20,17 +21,20 @@ export default function TeacherCourses() {
 
   useEffect(() => {
     fetchCursos();
-  }, []);
+  }, [user]);
 
   const fetchCursos = async () => {
     try {
-      const response = await fetch("/api/teacher/cursos", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCursos(Array.isArray(data) ? data : []);
+      const data = await getCursos();
+
+      let cursosFiltrados = data || [];
+
+      // If user is a teacher, filter courses assigned to them
+      if (user && user.rol === 'maestro') {
+        cursosFiltrados = cursosFiltrados.filter((c: any) => c.id_maestro === user.id);
       }
+
+      setCursos(cursosFiltrados);
     } catch (error) {
       console.error("Error fetching courses:", error);
     } finally {
@@ -133,7 +137,7 @@ export default function TeacherCourses() {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {curso.nombre_curso}
                 </h3>
-                
+
                 {curso.descripcion && (
                   <p className="text-sm text-gray-600 mb-3">{curso.descripcion}</p>
                 )}

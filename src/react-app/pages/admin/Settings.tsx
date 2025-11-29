@@ -1,3 +1,4 @@
+import { getConfiguracionCentro, saveConfiguracionCentro } from "@/react-app/lib/supabase-helpers";
 import AdminLayout from "@/react-app/components/AdminLayout";
 import { useEffect, useState } from "react";
 import { Settings as SettingsIcon, Save, Building2 } from "lucide-react";
@@ -41,12 +42,9 @@ export default function Settings() {
 
   const fetchConfig = async () => {
     try {
-      const response = await fetch("/api/configuracion-centro");
-      if (response.ok) {
-        const data = await response.json();
-        if (data && Object.keys(data).length > 0) {
-          setConfig(data);
-        }
+      const data = await getConfiguracionCentro();
+      if (data) {
+        setConfig(data as any);
       }
     } catch (error) {
       console.error("Error fetching config:", error);
@@ -61,22 +59,12 @@ export default function Settings() {
     setSaveMessage("");
 
     try {
-      const response = await fetch("/api/configuracion-centro", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      });
-
-      if (response.ok) {
-        setSaveMessage("Configuración guardada exitosamente");
-        setTimeout(() => setSaveMessage(""), 3000);
-      } else {
-        const error = await response.json();
-        alert(error.error || "Error al guardar la configuración");
-      }
-    } catch (error) {
+      await saveConfiguracionCentro(config);
+      setSaveMessage("Configuración guardada exitosamente");
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch (error: any) {
       console.error("Error saving config:", error);
-      alert("Error al guardar la configuración");
+      alert(error.message || "Error al guardar la configuración");
     } finally {
       setSaving(false);
     }
@@ -261,9 +249,9 @@ export default function Settings() {
                 {config.logo_minerd_url && (
                   <div className="mt-2 p-3 bg-gray-50 rounded-lg">
                     <p className="text-xs text-gray-600 mb-1">Vista previa:</p>
-                    <img 
-                      src={config.logo_minerd_url} 
-                      alt="Logo MINERD" 
+                    <img
+                      src={config.logo_minerd_url}
+                      alt="Logo MINERD"
                       className="h-16 object-contain"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
@@ -290,9 +278,9 @@ export default function Settings() {
                 {config.logo_centro_url && (
                   <div className="mt-2 p-3 bg-gray-50 rounded-lg">
                     <p className="text-xs text-gray-600 mb-1">Vista previa:</p>
-                    <img 
-                      src={config.logo_centro_url} 
-                      alt="Logo Centro" 
+                    <img
+                      src={config.logo_centro_url}
+                      alt="Logo Centro"
                       className="h-16 object-contain"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
