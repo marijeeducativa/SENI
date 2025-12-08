@@ -541,20 +541,12 @@ export default function BulkBulletinPrint() {
             <div key={data.estudiante.id} className="mb-5">
               <div className="flex flex-col items-center gap-5">
                 {/* HOJA 1: EXTERIOR (Portada y Observaciones) */}
-                <div className="bulletin-sheet bg-white" style={{
-                  width: '11in',
-                  height: '8.5in',
-                  padding: '0.4in 0.4in 0.5in 0.4in',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '0.6in',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                }}>
+                <div className="bulletin-sheet bg-white w-[11in] h-[8.5in] pt-[0.4in] px-[0.4in] pb-[0.5in] grid grid-cols-2 gap-[0.6in] shadow-lg">
                   {/* Observaciones */}
                   <div className="border-r border-gray-200 pr-4 flex flex-col">
                     {observationsIndicators && observationsIndicators.length > 0 && (
                       <div className="mb-2">
-                        <table className={"w-full border-collapse " + tableTextSize} style={{ border: '1.5px solid #000' }}>
+                        <table className={"w-full border-collapse border-[1.5px] border-black " + tableTextSize}>
                           <thead>
                             <tr>
                               <th className={`border border-gray-600 p-1 bg-blue-50 font-bold text-left uppercase ${categoryTextSize}`} colSpan={10}>
@@ -562,7 +554,7 @@ export default function BulkBulletinPrint() {
                               </th>
                             </tr>
                             <tr>
-                              <th className="border border-gray-600 p-0.5 bg-white font-bold text-center" style={{ width: '50%' }}>
+                              <th className="border border-gray-600 p-0.5 bg-white font-bold text-center w-1/2">
                                 INDICADORES DE LOGRO
                               </th>
                               <th colSpan={3} className="border border-gray-600 p-0.5 bg-white font-bold text-center text-[8px]">
@@ -579,9 +571,9 @@ export default function BulkBulletinPrint() {
                               <th className="border border-gray-600"></th>
                               {[0, 1, 2].map((p) => (
                                 <>
-                                  <th key={`${p}-l`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '11px' }}>L</th>
-                                  <th key={`${p}-p`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '11px' }}>P</th>
-                                  <th key={`${p}-i`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '11px' }}>I</th>
+                                  <th key={`${p}-l`} className="border border-gray-600 text-center text-[7px] p-0 w-[11px]">L</th>
+                                  <th key={`${p}-p`} className="border border-gray-600 text-center text-[7px] p-0 w-[11px]">P</th>
+                                  <th key={`${p}-i`} className="border border-gray-600 text-center text-[7px] p-0 w-[11px]">I</th>
                                 </>
                               ))}
                             </tr>
@@ -595,13 +587,13 @@ export default function BulkBulletinPrint() {
                                     const valor = data.evaluaciones[periodo]?.[ind.id];
                                     return (
                                       <>
-                                        <td key={`obs-${ind.id}-p${pIdx}-l`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '11px', fontSize: '9px' }}>
+                                        <td key={`obs-${ind.id}-p${pIdx}-l`} className="border border-gray-600 text-center p-0 font-bold text-black w-[11px] text-[9px]">
                                           {valor === "Adquirido" ? "✓" : ""}
                                         </td>
-                                        <td key={`obs-${ind.id}-p${pIdx}-p`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '11px', fontSize: '9px' }}>
+                                        <td key={`obs-${ind.id}-p${pIdx}-p`} className="border border-gray-600 text-center p-0 font-bold text-black w-[11px] text-[9px]">
                                           {valor === "En Proceso" ? "✓" : ""}
                                         </td>
-                                        <td key={`obs-${ind.id}-p${pIdx}-i`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '11px', fontSize: '9px' }}>
+                                        <td key={`obs-${ind.id}-p${pIdx}-i`} className="border border-gray-600 text-center p-0 font-bold text-black w-[11px] text-[9px]">
                                           {valor === "Iniciado" ? "✓" : ""}
                                         </td>
                                       </>
@@ -775,21 +767,13 @@ export default function BulkBulletinPrint() {
                 </div>
 
                 {/* HOJA 2: INTERIOR (Matriz de Indicadores) */}
-                <div className="bulletin-sheet bg-white" style={{
-                  width: '11in',
-                  height: '8.5in',
-                  padding: '0.4in 0.4in 0.5in 0.4in',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '0.6in',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                }}>
+                <div className="bulletin-sheet bg-white w-[11in] h-[8.5in] pt-[0.4in] px-[0.4in] pb-[0.5in] grid grid-cols-2 gap-[0.6in] shadow-lg">
                   {/* Left Panel */}
                   <div>
-                    <table className={"w-full border-collapse " + tableTextSize} style={{ border: '1.5px solid #000' }}>
+                    <table className={"w-full border-collapse border-[1.5px] border-black " + tableTextSize}>
                       <thead>
                         <tr>
-                          <th className="border border-gray-600 p-0.5 bg-white font-bold text-center" style={{ width: '44%' }}>
+                          <th className="border border-gray-600 p-0.5 bg-white font-bold text-center w-[44%]">
                             INDICADORES DE LOGRO
                           </th>
                           <th colSpan={3} className="border border-gray-600 p-0.5 bg-white font-bold text-center text-[8px]">
@@ -806,9 +790,9 @@ export default function BulkBulletinPrint() {
                           <th className="border border-gray-600"></th>
                           {[0, 1, 2].map((p) => (
                             <>
-                              <th key={`${p}-l`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '13px' }}>L</th>
-                              <th key={`${p}-p`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '13px' }}>P</th>
-                              <th key={`${p}-i`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '13px' }}>I</th>
+                              <th key={`${p}-l`} className="border border-gray-600 text-center text-[7px] p-0 w-[13px]">L</th>
+                              <th key={`${p}-p`} className="border border-gray-600 text-center text-[7px] p-0 w-[13px]">P</th>
+                              <th key={`${p}-i`} className="border border-gray-600 text-center text-[7px] p-0 w-[13px]">I</th>
                             </>
                           ))}
                         </tr>
@@ -833,13 +817,13 @@ export default function BulkBulletinPrint() {
                                   const valor = data.evaluaciones[periodo]?.[ind.id];
                                   return (
                                     <>
-                                      <td key={`left-${ind.id}-p${pIdx}-l`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '13px', fontSize: '10px' }}>
+                                      <td key={`left-${ind.id}-p${pIdx}-l`} className="border border-gray-600 text-center p-0 font-bold text-black w-[13px] text-[10px]">
                                         {valor === "Adquirido" ? "✓" : ""}
                                       </td>
-                                      <td key={`left-${ind.id}-p${pIdx}-p`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '13px', fontSize: '10px' }}>
+                                      <td key={`left-${ind.id}-p${pIdx}-p`} className="border border-gray-600 text-center p-0 font-bold text-black w-[13px] text-[10px]">
                                         {valor === "En Proceso" ? "✓" : ""}
                                       </td>
-                                      <td key={`left-${ind.id}-p${pIdx}-i`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '13px', fontSize: '10px' }}>
+                                      <td key={`left-${ind.id}-p${pIdx}-i`} className="border border-gray-600 text-center p-0 font-bold text-black w-[13px] text-[10px]">
                                         {valor === "Iniciado" ? "✓" : ""}
                                       </td>
                                     </>
@@ -855,10 +839,10 @@ export default function BulkBulletinPrint() {
 
                   {/* Right Panel */}
                   <div>
-                    <table className={"w-full border-collapse " + tableTextSize} style={{ border: '1.5px solid #000' }}>
+                    <table className={"w-full border-collapse border-[1.5px] border-black " + tableTextSize}>
                       <thead>
                         <tr>
-                          <th className="border border-gray-600 p-0.5 bg-white font-bold text-center" style={{ width: '44%' }}>
+                          <th className="border border-gray-600 p-0.5 bg-white font-bold text-center w-[44%]">
                             INDICADORES DE LOGRO
                           </th>
                           <th colSpan={3} className="border border-gray-600 p-0.5 bg-white font-bold text-center text-[8px]">
@@ -875,9 +859,9 @@ export default function BulkBulletinPrint() {
                           <th className="border border-gray-600"></th>
                           {[0, 1, 2].map((p) => (
                             <>
-                              <th key={`${p}-l`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '13px' }}>L</th>
-                              <th key={`${p}-p`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '13px' }}>P</th>
-                              <th key={`${p}-i`} className="border border-gray-600 text-center text-[7px] p-0" style={{ width: '13px' }}>I</th>
+                              <th key={`${p}-l`} className="border border-gray-600 text-center text-[7px] p-0 w-[13px]">L</th>
+                              <th key={`${p}-p`} className="border border-gray-600 text-center text-[7px] p-0 w-[13px]">P</th>
+                              <th key={`${p}-i`} className="border border-gray-600 text-center text-[7px] p-0 w-[13px]">I</th>
                             </>
                           ))}
                         </tr>
@@ -902,13 +886,13 @@ export default function BulkBulletinPrint() {
                                   const valor = data.evaluaciones[periodo]?.[ind.id];
                                   return (
                                     <>
-                                      <td key={`right-${ind.id}-p${pIdx}-l`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '13px', fontSize: '10px' }}>
+                                      <td key={`right-${ind.id}-p${pIdx}-l`} className="border border-gray-600 text-center p-0 font-bold text-black w-[13px] text-[10px]">
                                         {valor === "Adquirido" ? "✓" : ""}
                                       </td>
-                                      <td key={`right-${ind.id}-p${pIdx}-p`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '13px', fontSize: '10px' }}>
+                                      <td key={`right-${ind.id}-p${pIdx}-p`} className="border border-gray-600 text-center p-0 font-bold text-black w-[13px] text-[10px]">
                                         {valor === "En Proceso" ? "✓" : ""}
                                       </td>
-                                      <td key={`right-${ind.id}-p${pIdx}-i`} className="border border-gray-600 text-center p-0 font-bold text-black" style={{ width: '13px', fontSize: '10px' }}>
+                                      <td key={`right-${ind.id}-p${pIdx}-i`} className="border border-gray-600 text-center p-0 font-bold text-black w-[13px] text-[10px]">
                                         {valor === "Iniciado" ? "✓" : ""}
                                       </td>
                                     </>

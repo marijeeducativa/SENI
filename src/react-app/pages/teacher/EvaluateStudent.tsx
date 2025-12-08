@@ -680,6 +680,7 @@ export default function EvaluateStudent() {
               onClick={goToPreviousStudent}
               disabled={currentEstudianteIndex === 0}
               className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label="Estudiante anterior"
             >
               <ChevronLeft className="w-6 h-6 text-gray-700" />
             </button>
@@ -690,7 +691,7 @@ export default function EvaluateStudent() {
                 <h2 className="text-3xl font-bold text-indigo-600 uppercase">
                   {currentEstudiante.nombre} {currentEstudiante.apellido}
                 </h2>
-                <button className="p-1 hover:bg-gray-100 rounded transition-colors">
+                <button className="p-1 hover:bg-gray-100 rounded transition-colors" aria-label="Editar estudiante">
                   <Edit2 className="w-5 h-5 text-gray-400" />
                 </button>
               </div>
@@ -699,6 +700,7 @@ export default function EvaluateStudent() {
                   value={currentEstudiante.id}
                   onChange={(e) => handleEstudianteChange(e.target.value)}
                   className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  aria-label="Seleccionar estudiante"
                 >
                   {estudiantes.map((est) => (
                     <option key={est.id} value={est.id}>
@@ -713,6 +715,7 @@ export default function EvaluateStudent() {
               onClick={goToNextStudent}
               disabled={currentEstudianteIndex === estudiantes.length - 1}
               className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label="Estudiante siguiente"
             >
               <ChevronRight className="w-6 h-6 text-gray-700" />
             </button>
@@ -726,6 +729,7 @@ export default function EvaluateStudent() {
                 value={selectedPeriodoFilter}
                 onChange={(e) => setSelectedPeriodoFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                aria-label="Seleccionar período"
               >
                 {PERIODOS.map((periodo) => (
                   <option key={periodo} value={periodo}>
@@ -761,17 +765,16 @@ export default function EvaluateStudent() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider" style={{ width: '40%' }}>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider w-[40%]">
                     Indicadores de Logro
                   </th>
                   {PERIODOS.map((periodo, idx) => (
                     <th
                       key={periodo}
-                      className={`px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider ${idx === selectedPeriodoIndex
+                      className={`px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider w-[20%] ${idx === selectedPeriodoIndex
                         ? 'bg-indigo-100 text-indigo-700 border-l-4 border-indigo-500'
                         : 'text-gray-500'
                         }`}
-                      style={{ width: '20%' }}
                     >
                       {periodo.replace(" Período", "")}
                       {idx === selectedPeriodoIndex && <div className="text-xs font-normal mt-1">(Evaluando)</div>}

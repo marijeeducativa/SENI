@@ -316,6 +316,7 @@ export default function TeacherCourseDetail() {
               <button
                 onClick={() => setShowAddModal(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Cerrar modal"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -329,6 +330,7 @@ export default function TeacherCourseDetail() {
                 value={selectedEstudiante}
                 onChange={(e) => setSelectedEstudiante(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                aria-label="Seleccionar Estudiante"
               >
                 <option value="">-- Selecciona un estudiante --</option>
                 {estudiantesDisponibles.map((est) => (
