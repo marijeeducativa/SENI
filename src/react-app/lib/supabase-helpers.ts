@@ -771,21 +771,91 @@ export async function getBoletinData(estudianteId: number) {
     })) || []
 
     // 4. Get evaluations
-}
-
-if (result.error) throw result.error
-}
-
-// ==================== CONFIGURACIÓN CENTRO ====================
-
-export async function getConfiguracionCentro() {
-    const { data, error } = await supabase
-        .from('configuracion_centro')
+    const { data: evaluaciones } = await supabase
+        .from('evaluaciones')
         .select('*')
-        .maybeSingle()
+        .eq('id_estudiante', estudianteId)
+
+    // Transform evaluations to nested map: { [periodo]: { [indicadorId]: valor } }
+    const evaluacionesMap: Record<string, Record<number, string>> = {}
+    evaluaciones?.forEach((ev: any) => {
+        if (!evaluacionesMap[ev.periodo_evaluacion]) {
+            evaluacionesMap[ev.periodo_evaluacion] = {}
+        }
+        evaluacionesMap[ev.periodo_evaluacion][ev.id_indicador] = ev.valor_evaluacion
+    })
+
+    // 5. Get observations
+    const { data: observaciones } = await supabase
+        .from('observaciones_periodicas')
+        .select('*')
+        .eq('id_estudiante', estudianteId)
+
+    // Transform observations to map: { [periodo]: { cualidades..., necesita... } }
+    const observacionesMap: Record<string, any> = {}
+    observaciones?.forEach((obs: any) => {
+        observacionesMap[obs.periodo_evaluacion] = {
+            cualidades_destacar: obs.cualidades_destacar,
+            necesita_apoyo: obs.necesita_apoyo
+        }
+    })
+
+    return {
+        estudiante: {
+            ...estudiante,
+            curso: cursoData?.nombre_curso,
+            seccion: cursoData?.seccion,
+            anio_escolar: cursoData?.anio_escolar,
+            grado_nivel: `${cursoData?.nombre_curso}${cursoData?.seccion ? ` - ${cursoData?.seccion}` : ''}`
+        },
+        maestro: {
+            nombre: cursoData?.usuarios?.nombre || '',
+            apellido: cursoData?.usuarios?.apellido || ''
+        },
+        config: config || {},
+        indicadores: indicadoresFormatted,
+        evaluaciones: evaluacionesMap,
+        observaciones: observacionesMap
+    }
+}
+
+// ==================== AVISOS ====================
+
+export async function getAvisos() {
+    const { data, error } = await supabase
+        .from('avisos_profesores')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('Error fetching avisos:', error)
+        return []
+    }
+    return data
+}
+
+export async function createAviso(aviso: any) {
+    const { data, error } = await supabase
+        .from('avisos_profesores')
+        .insert({
+            titulo: aviso.titulo,
+            contenido: aviso.contenido,
+            target_rol: aviso.target_rol || 'all',
+            created_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single()
 
     if (error) throw error
     return data
+}
+const { data, error } = await supabase
+    .from('configuracion_centro')
+    .select('*')
+    .maybeSingle()
+
+if (error) throw error
+return data
 }
 
 export async function saveConfiguracionCentro(config: any) {
