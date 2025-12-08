@@ -512,6 +512,31 @@ export default function BulkBulletinPrint() {
         {allBulletins.map((data, bulletinIndex) => {
           const { leftIndicators, rightIndicators, observationsIndicators } = distributeIndicatorsLinear(data);
 
+          // Dynamic font sizing
+          const curso = data.estudiante.curso || "";
+          const isLargeFont = ["Prekinder", "Kinder", "Párvulo II", "Párvulo I", "Parvulo I"].includes(curso);
+          const isParvulo3 = ["Párvulo III", "Parvulo III", "Párvulo 3", "Parvulo 3"].includes(curso);
+          const isMediumFont = curso === "Preprimario";
+
+          let tableTextSize = "text-[9px]";
+          let categoryTextSize = "text-[9px]";
+          let indicatorTextSize = "text-[8px] leading-tight";
+
+          if (isLargeFont) {
+            tableTextSize = "text-[11px]";
+            categoryTextSize = "text-[12px]";
+            indicatorTextSize = "text-[11px] leading-snug";
+          } else if (isParvulo3) {
+            tableTextSize = "text-[10px]";
+            categoryTextSize = "text-[11px]";
+            indicatorTextSize = "text-[10px] leading-snug";
+          } else if (isMediumFont) {
+            tableTextSize = "text-[9.5px]";
+            categoryTextSize = "text-[10.5px]";
+            indicatorTextSize = "text-[9.5px] leading-tight";
+          }
+
+
           return (
             <div key={data.estudiante.id} className="mb-5">
               <div className="flex flex-col items-center gap-5">
@@ -529,10 +554,10 @@ export default function BulkBulletinPrint() {
                   <div className="border-r border-gray-200 pr-4 flex flex-col">
                     {observationsIndicators && observationsIndicators.length > 0 && (
                       <div className="mb-2">
-                        <table className="w-full border-collapse text-[9px]" style={{ border: '1.5px solid #000' }}>
+                        <table className={"w-full border-collapse " + tableTextSize} style={{ border: '1.5px solid #000' }}>
                           <thead>
                             <tr>
-                              <th className="border border-gray-600 p-1 bg-blue-50 font-bold text-left uppercase text-[10px]" colSpan={10}>
+                              <th className={`border border-gray-600 p-1 bg-blue-50 font-bold text-left uppercase ${categoryTextSize}`} colSpan={10}>
                                 Continuación de Indicadores - Dominio Cognitivo
                               </th>
                             </tr>
@@ -565,7 +590,7 @@ export default function BulkBulletinPrint() {
                             {observationsIndicators.map((ind) => {
                               return (
                                 <tr key={`obs-ind-${ind.id}`}>
-                                  <td className="border border-gray-600 p-0.5 text-left text-[8px] leading-tight">{ind.descripcion}</td>
+                                  <td className={`border border-gray-600 p-0.5 text-left ${indicatorTextSize}`}>{ind.descripcion}</td>
                                   {["1er Período", "2do Período", "3er Período"].map((periodo, pIdx) => {
                                     const valor = data.evaluaciones[periodo]?.[ind.id];
                                     return (
@@ -608,7 +633,7 @@ export default function BulkBulletinPrint() {
                                 <span className="text-[9px] uppercase font-bold text-gray-600 block mb-0.5">
                                   Cualidades a destacar:
                                 </span>
-                                <div className="h-10 text-[9px] leading-tight overflow-hidden">
+                                <div className="h-10 text-[9px] leading-tight overflow-hidden whitespace-pre-wrap text-justify">
                                   {obs.cualidades_destacar}
                                 </div>
                               </div>
@@ -616,7 +641,7 @@ export default function BulkBulletinPrint() {
                                 <span className="text-[9px] uppercase font-bold text-gray-600 block mb-0.5">
                                   Aspectos a estimular:
                                 </span>
-                                <div className="h-10 text-[9px] leading-tight overflow-hidden">
+                                <div className="h-10 text-[9px] leading-tight overflow-hidden whitespace-pre-wrap text-justify">
                                   {obs.necesita_apoyo}
                                 </div>
                               </div>
@@ -761,7 +786,7 @@ export default function BulkBulletinPrint() {
                 }}>
                   {/* Left Panel */}
                   <div>
-                    <table className="w-full border-collapse text-[9px]" style={{ border: '1.5px solid #000' }}>
+                    <table className={"w-full border-collapse " + tableTextSize} style={{ border: '1.5px solid #000' }}>
                       <thead>
                         <tr>
                           <th className="border border-gray-600 p-0.5 bg-white font-bold text-center" style={{ width: '44%' }}>
@@ -797,13 +822,13 @@ export default function BulkBulletinPrint() {
                             <>
                               {showCategoryHeader && (
                                 <tr key={`cat-${ind.nombre_categoria}-${index}`}>
-                                  <td colSpan={10} className="border border-gray-600 bg-green-50 font-bold uppercase text-[9px] px-1.5 py-0.5 text-green-900">
+                                  <td colSpan={10} className={`border border-gray-600 bg-green-50 font-bold uppercase ${categoryTextSize} px-1.5 py-0.5 text-green-900`}>
                                     {ind.nombre_categoria || "Sin categoría"}
                                   </td>
                                 </tr>
                               )}
                               <tr key={`left-ind-${ind.id}`} className="hover:bg-gray-50">
-                                <td className="border border-gray-600 p-0.5 text-left text-[8px] leading-tight">{ind.descripcion}</td>
+                                <td className={`border border-gray-600 p-0.5 text-left ${indicatorTextSize}`}>{ind.descripcion}</td>
                                 {["1er Período", "2do Período", "3er Período"].map((periodo, pIdx) => {
                                   const valor = data.evaluaciones[periodo]?.[ind.id];
                                   return (
@@ -830,7 +855,7 @@ export default function BulkBulletinPrint() {
 
                   {/* Right Panel */}
                   <div>
-                    <table className="w-full border-collapse text-[9px]" style={{ border: '1.5px solid #000' }}>
+                    <table className={"w-full border-collapse " + tableTextSize} style={{ border: '1.5px solid #000' }}>
                       <thead>
                         <tr>
                           <th className="border border-gray-600 p-0.5 bg-white font-bold text-center" style={{ width: '44%' }}>
@@ -866,13 +891,13 @@ export default function BulkBulletinPrint() {
                             <>
                               {showCategoryHeader && (
                                 <tr key={`cat-${ind.nombre_categoria}-${index}`}>
-                                  <td colSpan={10} className="border border-gray-600 bg-green-50 font-bold uppercase text-[9px] px-1.5 py-0.5 text-green-900">
+                                  <td colSpan={10} className={`border border-gray-600 bg-green-50 font-bold uppercase ${categoryTextSize} px-1.5 py-0.5 text-green-900`}>
                                     {ind.nombre_categoria || "Sin categoría"}
                                   </td>
                                 </tr>
                               )}
                               <tr key={`right-ind-${ind.id}`} className="hover:bg-gray-50">
-                                <td className="border border-gray-600 p-0.5 text-left text-[8px] leading-tight">{ind.descripcion}</td>
+                                <td className={`border border-gray-600 p-0.5 text-left ${indicatorTextSize}`}>{ind.descripcion}</td>
                                 {["1er Período", "2do Período", "3er Período"].map((periodo, pIdx) => {
                                   const valor = data.evaluaciones[periodo]?.[ind.id];
                                   return (
