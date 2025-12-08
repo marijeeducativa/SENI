@@ -1,5 +1,5 @@
 import { useAuth } from "@/react-app/contexts/AuthContext";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, Users, GraduationCap, BookOpen, ClipboardList, LayoutDashboard, Database, Settings, FileStack } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -63,11 +63,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
                     ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>

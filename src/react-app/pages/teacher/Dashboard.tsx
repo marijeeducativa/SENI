@@ -1,5 +1,5 @@
 import { useAuth } from "@/react-app/contexts/AuthContext";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { LogOut, BookOpen, ClipboardList } from "lucide-react";
 
 export default function TeacherDashboard() {

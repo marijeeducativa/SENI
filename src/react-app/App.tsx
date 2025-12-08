@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/react-app/contexts/AuthContext";
 import LoginPage from "@/react-app/pages/Login";
 import AdminDashboard from "@/react-app/pages/admin/Dashboard";

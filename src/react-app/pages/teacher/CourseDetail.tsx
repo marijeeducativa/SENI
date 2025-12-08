@@ -1,6 +1,6 @@
 import { getCursos, getEstudiantes, enrollEstudiante, unenrollEstudiante } from "@/react-app/lib/supabase-helpers";
 import { useAuth } from "@/react-app/contexts/AuthContext";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { LogOut, ArrowLeft, Users, UserPlus, X, ClipboardList, FileStack } from "lucide-react";
 

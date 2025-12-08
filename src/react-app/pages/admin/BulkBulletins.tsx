@@ -1,6 +1,6 @@
 import AdminLayout from "@/react-app/components/AdminLayout";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { FileStack, Printer } from "lucide-react";
 import { getCursos } from "@/react-app/lib/supabase-helpers";
 

@@ -1,6 +1,6 @@
 import { getCursos } from "@/react-app/lib/supabase-helpers";
 import { useAuth } from "@/react-app/contexts/AuthContext";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { LogOut, BookOpen, Users } from "lucide-react";
 

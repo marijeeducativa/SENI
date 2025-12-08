@@ -1,6 +1,6 @@
 import { useAuth } from "@/react-app/contexts/AuthContext";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { LogIn, Loader2 } from "lucide-react";
 
 export default function Login() {

@@ -1,6 +1,6 @@
 import { getEstudiantes, getBoletinData } from "@/react-app/lib/supabase-helpers";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Printer, Loader2 } from "lucide-react";
 
 interface Estudiante {

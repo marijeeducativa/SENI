@@ -1,5 +1,5 @@
 import { useAuth } from "@/react-app/contexts/AuthContext";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { LogOut, ArrowLeft, ChevronLeft, ChevronRight, FileText, Edit2, MessageSquare } from "lucide-react";
 import { getCursos, getEstudiantes, getIndicadores, getEvaluaciones, saveEvaluacion, getObservaciones, saveObservacion } from "@/react-app/lib/supabase-helpers";
