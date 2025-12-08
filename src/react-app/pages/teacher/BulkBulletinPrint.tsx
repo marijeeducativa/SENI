@@ -616,7 +616,7 @@ export default function BulkBulletinPrint() {
                         const obs = data.observaciones?.[periodoKey] || { cualidades_destacar: "", necesita_apoyo: "" };
 
                         return (
-                          <div key={periodo} className="border border-black p-1.5 flex-grow flex flex-col min-h-[80px]">
+                          <div key={periodo} className="border border-black p-1.5 flex flex-col min-h-[80px]">
                             <div className="font-bold bg-gray-100 px-1.5 py-0.5 text-[10px] mb-1 border-b border-gray-300">
                               {periodo}
                             </div>
