@@ -704,11 +704,16 @@ export default function BulkBulletinPrint() {
       // Socio(9) + Art(9) + Psico(9) = 27.
       // Des(9) + Cog(11) + Com(9) = 29.
       // 27 / 29.
+      // User request: Move 4 indicators from Com to observations to fix overflow.
+
+      const comSplitIndex = com.length - 4;
+      const comMatrix = com.slice(0, comSplitIndex);
+      const comObs = com.slice(comSplitIndex);
 
       return {
         leftIndicators: [...socio, ...art, ...psico],
-        rightIndicators: [...des, ...cog, ...com],
-        observationsIndicators: []
+        rightIndicators: [...des, ...cog, ...comMatrix],
+        observationsIndicators: comObs
       };
     }
 
@@ -992,7 +997,7 @@ export default function BulkBulletinPrint() {
                           <thead>
                             <tr>
                               <th className={`border border-gray-600 p-1 bg-blue-50 font-bold text-left uppercase ${categoryTextSize}`} colSpan={10}>
-                                Continuación de Indicadores - Dominio Cognitivo
+                                Continuación - {observationsIndicators[0]?.nombre_categoria || "Dominio Cognitivo"}
                               </th>
                             </tr>
                             <tr>
