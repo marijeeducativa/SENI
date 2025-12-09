@@ -994,13 +994,38 @@ export default function BulletinPreview() {
         {`
           @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
           
+          @page {
+            size: letter landscape;
+            margin: 0;
+          }
+
           @media print {
             .no-print { display: none !important; }
-            body { margin: 0; padding: 0; background: white; }
+            html, body { margin: 0 !important; padding: 0 !important; background: white !important; width: 100% !important; height: 100% !important; }
+            
+            .bulletin-print-container { 
+              background: white !important; 
+              padding: 0 !important; 
+              margin: 0 !important; 
+              display: block !important; 
+              width: 100% !important;
+              height: auto !important;
+              gap: 0 !important;
+            }
+
             .bulletin-sheet { 
               box-shadow: none !important; 
               margin: 0 !important;
+              width: 11in !important;
+              height: 8.5in !important;
               page-break-after: always;
+              overflow: hidden !important;
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+            
+            .bulletin-sheet:last-child {
+              page-break-after: auto;
             }
           }
           
@@ -1025,7 +1050,7 @@ export default function BulletinPreview() {
         </button>
       </div>
 
-      <div className="min-h-screen bg-gray-600 p-5 flex flex-col items-center gap-5">
+      <div className="bulletin-print-container min-h-screen bg-gray-600 p-5 flex flex-col items-center gap-5">
         {/* HOJA 1: EXTERIOR (Portada y Observaciones) */}
         <div className="bulletin-sheet bg-white w-[11in] h-[8.5in] pt-[0.4in] px-[0.4in] pb-[0.5in] grid grid-cols-2 gap-[0.6in] shadow-lg items-start">
           {/* Observaciones */}
