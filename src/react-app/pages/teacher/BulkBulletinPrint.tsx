@@ -285,10 +285,10 @@ export default function BulkBulletinPrint() {
       descripcion: summarizeIndicator(ind.descripcion, data.estudiante.curso)
     }));
 
-    if (data.estudiante.curso === "Kinder") {
-      // Group indicators by domain with robust matching
-      const normalizeCat = (cat: string | null) => (cat || "").trim().toLowerCase();
+    const normalizeCat = (cat: string | null) => (cat || "").trim().toLowerCase();
+    const courseName = (data.estudiante.curso || "").trim();
 
+    if (courseName === "Kinder") {
       const socioemocional = allIndicators.filter(ind =>
         normalizeCat(ind.nombre_categoria).includes("socioemocional")
       );
@@ -334,15 +334,15 @@ export default function BulkBulletinPrint() {
       };
     }
 
-    if (data.estudiante.curso === "Párvulo II") {
+    if (courseName === "Párvulo II") {
       const relacionesSocioafectivas = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Relaciones socioafectivas, identidad y autonomía"
+        normalizeCat(ind.nombre_categoria).includes("relaciones")
       );
       const descubrimientoEntorno = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Descubrimiento de su cuerpo y su relación con el entorno"
+        normalizeCat(ind.nombre_categoria).includes("descubrimiento")
       );
       const comunicativoIndicators = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Lenguaje e interacción"
+        normalizeCat(ind.nombre_categoria).includes("lenguaje")
       );
 
       const comunicativoForMatrix = comunicativoIndicators.slice(0, -12);
@@ -368,12 +368,12 @@ export default function BulkBulletinPrint() {
       };
     }
 
-    if (data.estudiante.curso === "Prekinder") {
+    if (courseName === "Prekinder") {
       const comunicativoIndicators = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Dominio Comunicativo"
+        normalizeCat(ind.nombre_categoria).includes("comunicativo")
       );
       const otherIndicators = allIndicators.filter(ind =>
-        ind.nombre_categoria !== "Dominio Comunicativo"
+        !normalizeCat(ind.nombre_categoria).includes("comunicativo")
       );
 
       const comunicativoForMatrix = comunicativoIndicators.slice(0, -8);
@@ -389,26 +389,27 @@ export default function BulkBulletinPrint() {
       };
     }
 
-    if (data.estudiante.curso === "Preprimario") {
+    if (courseName === "Preprimario") {
       const socioemocional = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Dominio Socioemocional"
+        normalizeCat(ind.nombre_categoria).includes("socioemocional")
       );
       const artistico = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Dominio Artístico y Creativo"
+        normalizeCat(ind.nombre_categoria).includes("artístico") || normalizeCat(ind.nombre_categoria).includes("artistico")
       );
       const psicomotor = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Dominio Psicomotor y de Salud"
+        normalizeCat(ind.nombre_categoria).includes("psicomotor")
       );
       const descubrimiento = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Dominio Descubrimiento del Mundo"
+        normalizeCat(ind.nombre_categoria).includes("descubrimiento")
       );
       const cognitivo = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Dominio Cognitivo"
+        normalizeCat(ind.nombre_categoria).includes("cognitivo")
       );
       const comunicativo = allIndicators.filter(ind =>
-        ind.nombre_categoria === "Dominio Comunicativo"
+        normalizeCat(ind.nombre_categoria).includes("comunicativo")
       );
 
+      const comunicativoForMatrix = comunicativo.slice(0, -8);
       const comunicativoForObservations = comunicativo.slice(-8);
 
       // Split Psicomotor: last 3 go to right page
@@ -424,15 +425,14 @@ export default function BulkBulletinPrint() {
       const rightIndicators = [
         ...psicomotorRight,
         ...descubrimiento,
-        ...cognitivo
+        ...cognitivo,
+        ...comunicativoForMatrix
       ];
-
-      const observationsIndicators = comunicativoForObservations;
 
       return {
         leftIndicators,
         rightIndicators,
-        observationsIndicators
+        observationsIndicators: comunicativoForObservations
       };
     }
 
